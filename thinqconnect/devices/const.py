@@ -1,3 +1,7 @@
+"""
+    * SPDX-FileCopyrightText: Copyright 2024 LG Electronics Inc.
+    * SPDX-License-Identifier: Apache-2.0
+"""
 from enum import StrEnum, auto
 
 
@@ -111,6 +115,7 @@ class Property(StrEnum):
     MOOD_LAMP_STATE = auto()
     NIGHT_TARGET_TEMPERATURE = auto()
     ODOR = auto()
+    ODOR_LEVEL = auto()
     ONE_TOUCH_FILTER = auto()
     OPERATION_MODE = auto()
     OPTIMAL_HUMIDITY = auto()
@@ -162,6 +167,7 @@ class Property(StrEnum):
     TOTAL_HOUR = auto()
     TOTAL_MINUTE = auto()
     TOTAL_POLLUTION = auto()
+    TOTAL_POLLUTION_LEVEL = auto()
     TWO_SET_COOL_TARGET_TEMPERATURE = auto()
     TWO_SET_CURRENT_TEMPERATURE = auto()
     TWO_SET_HEAT_TARGET_TEMPERATURE = auto()

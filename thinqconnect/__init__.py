@@ -1,3 +1,7 @@
+"""
+    * SPDX-FileCopyrightText: Copyright 2024 LG Electronics Inc.
+    * SPDX-License-Identifier: Apache-2.0
+"""
 from .const import PROPERTY_READABLE, PROPERTY_WRITABLE, DeviceType
 from .country import Country
 from .device import BaseDevice

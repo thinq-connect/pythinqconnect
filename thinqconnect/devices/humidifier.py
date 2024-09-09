@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+"""
+    * SPDX-FileCopyrightText: Copyright 2024 LG Electronics Inc.
+    * SPDX-License-Identifier: Apache-2.0
+"""
 from typing import Any
 
 from ..thinq_api import ThinQApi
@@ -52,6 +56,7 @@ class HumidifierProfile(ConnectDeviceProfile):
                 "airQualitySensor": {
                     "monitoringEnabled": Property.MONITORING_ENABLED,
                     "totalPollution": Property.TOTAL_POLLUTION,
+                    "totalPollutionLevel": Property.TOTAL_POLLUTION_LEVEL,
                     "PM1": Property.PM1,
                     "PM2": Property.PM2,
                     "PM10": Property.PM10,

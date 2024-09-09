@@ -1,3 +1,8 @@
+"""
+    * SPDX-FileCopyrightText: Copyright 2024 LG Electronics Inc.
+    * SPDX-License-Identifier: Apache-2.0
+"""
+
 import os
 
 from setuptools import find_packages, setup
@@ -10,7 +15,7 @@ with open(os.path.join("README.md"), "r") as fh:
 
 setup(
     name="thinqconnect",
-    version="0.9.6",
+    version="0.9.7",
     packages=find_packages(exclude=["tests"]),
     description="ThinQ Connect Python SDK",
     author="ThinQConnect",

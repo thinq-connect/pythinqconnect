@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+"""
+    * SPDX-FileCopyrightText: Copyright 2024 LG Electronics Inc.
+    * SPDX-License-Identifier: Apache-2.0
+"""
 from typing import Any
 
 from ..thinq_api import ThinQApi
@@ -39,8 +43,10 @@ class AirPurifierProfile(ConnectDeviceProfile):
                     "PM2": Property.PM2,
                     "PM10": Property.PM10,
                     "odor": Property.ODOR,
+                    "odorLevel": Property.ODOR_LEVEL,
                     "humidity": Property.HUMIDITY,
                     "totalPollution": Property.TOTAL_POLLUTION,
+                    "totalPollutionLevel": Property.TOTAL_POLLUTION_LEVEL,
                 },
             },
         )

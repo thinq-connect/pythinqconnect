@@ -1,3 +1,7 @@
+"""
+    * SPDX-FileCopyrightText: Copyright 2024 LG Electronics Inc.
+    * SPDX-License-Identifier: Apache-2.0
+"""
 from typing import Final
 
 API_KEY: Final[str] = "v6GFvkweNo7DK7yD3ylIZ9w52aKBU0eJ7wLXkSR3"

@@ -1,6 +1,10 @@
-"""Support for LG ThinQ Connect API."""
-
 from __future__ import annotations
+
+"""
+    * SPDX-FileCopyrightText: Copyright 2024 LG Electronics Inc.
+    * SPDX-License-Identifier: Apache-2.0
+"""
+"""Support for LG ThinQ Connect API."""
 
 import asyncio
 import logging
