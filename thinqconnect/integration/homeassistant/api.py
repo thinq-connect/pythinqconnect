@@ -1,12 +1,13 @@
-from __future__ import annotations
-
 """
     * SPDX-FileCopyrightText: Copyright 2024 LG Electronics Inc.
     * SPDX-License-Identifier: Apache-2.0
 """
-"""The extended api interface for Home Assistant."""
+
+# The extended api interface for Home Assistant.
+from __future__ import annotations
 
 import asyncio
+from datetime import time
 from enum import StrEnum, auto
 from typing import Any, Final
 
@@ -45,14 +46,15 @@ from thinqconnect import (
     WaterPurifierDevice,
     WineCellarDevice,
 )
-from thinqconnect.devices.const import Location
-from thinqconnect.devices.const import Property as ThinQProperty
+from thinqconnect.devices.const import Location, Property as ThinQProperty
 
 from .property import (
     ActiveMode,
     ClimatePropertyState,
     ClimatePropertyStateSpec,
     ClimateTemperatureSpec,
+    ExtendedPropertyState,
+    ExtendedPropertyStateSpec,
     PropertyHolder,
     PropertyOption,
     PropertyState,
@@ -131,7 +133,7 @@ CLIMATE_STATE_MAP = {
             target_temp_high_key=ThinQProperty.TWO_SET_COOL_TARGET_TEMPERATURE,
             unit_key=ThinQProperty.TWO_SET_TEMPERATURE_UNIT,
         ),
-        fan_mode_keys=(ThinQProperty.WIND_STRENGTH, ThinQProperty.WIND_STEP),
+        fan_mode_keys=(ThinQProperty.WIND_STEP, ThinQProperty.WIND_STRENGTH),
         humidity_key=ThinQProperty.HUMIDITY,
     ),
     ExtendedProperty.CLIMATE_SYSTEM_BOILER: ClimatePropertyStateSpec(
@@ -144,6 +146,18 @@ CLIMATE_STATE_MAP = {
             target_temp_high_key=ThinQProperty.HEAT_TARGET_TEMPERATURE,
             unit_key=ThinQProperty.TEMPERATURE_UNIT,
         ),
+    ),
+}
+
+EXTENDED_STATE_MAP = {
+    ExtendedProperty.VACUUM: ExtendedPropertyStateSpec(
+        state_key=ThinQProperty.CURRENT_STATE,
+        battery_keys=(ThinQProperty.BATTERY_PERCENT, ThinQProperty.BATTERY_LEVEL),
+        operation_mode_key=ThinQProperty.CLEAN_OPERATION_MODE,
+    ),
+    ExtendedProperty.FAN: ExtendedPropertyStateSpec(
+        power_key=ThinQProperty.CEILING_FAN_OPERATION_MODE,
+        fan_mode_key=ThinQProperty.WIND_STRENGTH,
     ),
 }
 
@@ -169,16 +183,53 @@ class TimerProperty(StrEnum):
     TOTAL = auto()
 
 
+async def set_absolute_time_to_start(
+    api: ConnectBaseDevice, value: time | None
+) -> None:
+    """Set an absolute start timer."""
+    if isinstance(
+        api,
+        (
+            AirConditionerDevice,
+            AirPurifierFanDevice,
+            AirPurifierDevice,
+            HumidifierDevice,
+            RobotCleanerDevice,
+        ),
+    ):
+        if value:
+            await api.set_absolute_time_to_start(value.hour, value.minute)
+        else:
+            await api.set_absolute_time_to_start(-1, -1)
+
+
+async def set_absolute_time_to_stop(api: ConnectBaseDevice, value: time | None) -> None:
+    """Set an absolute stop timer."""
+    if isinstance(
+        api,
+        (
+            AirConditionerDevice,
+            AirPurifierFanDevice,
+            AirPurifierDevice,
+            HumidifierDevice,
+        ),
+    ):
+        if value:
+            await api.set_absolute_time_to_stop(value.hour, value.minute)
+        else:
+            await api.set_absolute_time_to_stop(-1, -1)
+
+
 TIMER_STATE_MAP = {
     TimerProperty.ABSOLUTE_TO_START: TimerPropertyStateSpec(
         hour_key=ThinQProperty.ABSOLUTE_HOUR_TO_START,
         minute_key=ThinQProperty.ABSOLUTE_MINUTE_TO_START,
-        time_format="%I:%M %p",
+        setter=set_absolute_time_to_start,
     ),
     TimerProperty.ABSOLUTE_TO_STOP: TimerPropertyStateSpec(
         hour_key=ThinQProperty.ABSOLUTE_HOUR_TO_STOP,
         minute_key=ThinQProperty.ABSOLUTE_MINUTE_TO_STOP,
-        time_format="%I:%M %p",
+        setter=set_absolute_time_to_stop,
     ),
     TimerProperty.LIGHT_END: TimerPropertyStateSpec(
         hour_key=ThinQProperty.END_HOUR,
@@ -213,6 +264,7 @@ TIMER_STATE_MAP = {
     TimerProperty.REMAIN: TimerPropertyStateSpec(
         hour_key=ThinQProperty.REMAIN_HOUR,
         minute_key=ThinQProperty.REMAIN_MINUTE,
+        second_key=ThinQProperty.REMAIN_SECOND,
     ),
     TimerProperty.RUNNING: TimerPropertyStateSpec(
         hour_key=ThinQProperty.RUNNING_HOUR,
@@ -239,7 +291,14 @@ SELECTIVE_STATE_MAP = {
             ThinQProperty.TARGET_TEMPERATURE_C,
             ThinQProperty.TARGET_TEMPERATURE_F,
         ),
-    )
+    ),
+    ThinQProperty.BATTERY_PERCENT: SelectivePropertyStateSpec(
+        origin_key=ThinQProperty.BATTERY_PERCENT,
+        selective_keys=(
+            ThinQProperty.BATTERY_PERCENT,
+            ThinQProperty.BATTERY_LEVEL,
+        ),
+    ),
 }
 
 
@@ -273,7 +332,7 @@ class HABridge:
         self.device = device
         self.sub_id = sub_id
 
-        self.locations = [None] + list(self.device.profiles.locations)
+        self.locations = [None, *list(self.device.profiles.locations)]
 
         # The idx map contains all idenfiers in order to get property states.
         # - idx == "{key}", for non-location property.
@@ -303,6 +362,9 @@ class HABridge:
 
         # Create holders for location properties.
         for location in self.device.profiles.locations:
+            if self.sub_id is not None and self.sub_id != location:
+                continue
+
             sub_profile = self.device.profiles.get_sub_profile(location)
             if not sub_profile:
                 continue
@@ -320,6 +382,7 @@ class HABridge:
 
         self._setup_selective_states()
         self._setup_climate_states()
+        self._setup_extended_states()
         self._setup_timer_states()
 
     def _setup_selective_states(self) -> None:
@@ -329,7 +392,7 @@ class HABridge:
                 if (
                     selective_state := self._create_selective_state(spec, location)
                 ) is not None:
-                    # Note that seletive state can overwirte single state.
+                    # Note that seletive state can overwrite single state.
                     idx = self._add_idx(key, location)
                     self.state_map[idx] = selective_state
 
@@ -337,11 +400,11 @@ class HABridge:
         self, spec: SelectivePropertyStateSpec, location: str
     ) -> SelectivePropertyState | None:
         """Create selective state if possible."""
-        holders: list[PropertyHolder] = []
-        for key in spec.selective_keys:
-            if (holder := self._get_holder(key, location)) is not None:
-                holders.append(holder)
-
+        holders = [
+            holder
+            for key in spec.selective_keys
+            if (holder := self._get_holder(key, location)) is not None
+        ]
         return SelectivePropertyState(spec.origin_key, holders) if holders else None
 
     def _setup_climate_states(self) -> None:
@@ -416,19 +479,78 @@ class HABridge:
             humidity_holder=self._get_holder(spec.humidity_key, location),
         )
 
+    def _setup_extended_states(self) -> None:
+        """Set up optional states for vacuum."""
+        for key, spec in EXTENDED_STATE_MAP.items():
+            for location in self.locations:
+                if (state := self._create_extended_state(spec, location)) is not None:
+                    idx = self._add_idx(key, location)
+                    self.state_map[idx] = state
+
+    def _create_extended_state(
+        self, spec: ExtendedPropertyStateSpec, location: str
+    ) -> ExtendedPropertyState | None:
+        """Create vacuum state if possible."""
+        # vacuum's state, battery, operation_mode.
+        state_holder = (
+            self._get_holder(spec.state_key, location)
+            if spec.state_key is not None
+            else None
+        )
+        if spec.battery_keys is not None:
+            battery_holder = [
+                holder
+                for battery_key in spec.battery_keys
+                if (holder := self._get_holder(battery_key, location)) is not None
+            ]
+
+        clean_operation_mode_holder = (
+            self._get_holder(spec.operation_mode_key, location)
+            if spec.operation_mode_key is not None
+            else None
+        )
+        # fan's power, fan
+        power_holder = (
+            self._get_holder(spec.power_key, location)
+            if spec.power_key is not None
+            else None
+        )
+        fan_mode_holder = (
+            self._get_holder(spec.fan_mode_key, location)
+            if spec.fan_mode_key is not None
+            else None
+        )
+        if (
+            state_holder is None
+            or battery_holder is None
+            or clean_operation_mode_holder is None
+        ) and (power_holder is None or fan_mode_holder is None):
+            return None
+
+        return ExtendedPropertyState(
+            state_holder=state_holder,
+            battery_holders=battery_holder if battery_holder else None,
+            clean_operation_mode_holder=clean_operation_mode_holder,
+            fan_mode_holder=fan_mode_holder,
+            power_holder=power_holder,
+        )
+
     def _setup_timer_states(self) -> None:
         """Set up optional states for timer."""
         for key, spec in TIMER_STATE_MAP.items():
             for location in self.locations:
                 hour_holder = self._get_holder(spec.hour_key, location)
                 minute_holder = self._get_holder(spec.minute_key, location)
+                second_holder = self._get_holder(spec.second_key, location)
 
-                if hour_holder is not None and minute_holder is not None:
+                if minute_holder is not None:
                     idx = self._add_idx(key, location)
                     self.state_map[idx] = TimerPropertyState(
                         hour_holder,
                         minute_holder,
+                        second_holder,
                         time_format=spec.time_format,
+                        setter=spec.setter,
                     )
 
     def _get_holder(
@@ -458,8 +580,11 @@ class HABridge:
 
     def get_location_for_idx(self, idx: str) -> str | None:
         """Return the location for idx."""
-        if holder := self.property_map.get(idx):
+        if (holder := self.property_map.get(idx)) is not None:
             return holder.location
+
+        if (state := self.state_map.get(idx)) is not None:
+            return state.location
 
         return None
 
@@ -472,14 +597,16 @@ class HABridge:
         if active_mode is None and key in (ExtendedProperty, TimerProperty):
             return idx_list
 
-        result: list[str] = []
-        for idx in idx_list:
-            if (state := self.state_map.get(idx)) is not None and state.can_activate(
-                active_mode
-            ):
-                result.append(idx)
+        return [
+            idx
+            for idx in idx_list
+            if (state := self.state_map.get(idx)) is not None
+            and state.can_activate(active_mode)
+        ]
 
-        return result
+    async def setup_data(self) -> dict[str, PropertyState]:
+        """Get state map."""
+        return self.state_map
 
     async def fetch_data(self) -> dict[str, PropertyState]:
         """Fetch data from API endpoint."""
@@ -498,16 +625,13 @@ class HABridge:
 
     def update_status(self, status: dict[str, Any]) -> dict[str, PropertyState] | None:
         """Update data manually."""
-        if status_data := status.get(self.sub_id) if self.sub_id else status:
-            self.device.update_status(status_data)
+        self.device.update_status(status)
 
-            # Update all states.
-            for state in self.state_map.values():
-                state.update()
+        # Update all states.
+        for state in self.state_map.values():
+            state.update()
 
-            return self.state_map
-
-        return None
+        return self.state_map
 
     def update_notification(
         self, message: str | None
@@ -578,10 +702,23 @@ class HABridge:
     async def async_set_fan_mode(self, idx: str, value: str) -> None:
         """Set fan mode."""
         if (
-            isinstance(state := self.state_map.get(idx), ClimatePropertyState)
+            isinstance(
+                state := self.state_map.get(idx),
+                (ClimatePropertyState, ExtendedPropertyState),
+            )
             and state.fan_mode_holder is not None
         ):
             return await state.fan_mode_holder.async_set(value)
+
+        raise ThinQAPIException("0001", "The control command is not supported.", {})
+
+    async def async_set_clean_operation_mode(self, idx: str, value: str) -> None:
+        """Set clean operation mode."""
+        if (
+            isinstance(state := self.state_map.get(idx), ExtendedPropertyState)
+            and state.clean_operation_mode_holder is not None
+        ):
+            return await state.clean_operation_mode_holder.async_set(value)
 
         raise ThinQAPIException("0001", "The control command is not supported.", {})
 
@@ -658,12 +795,8 @@ async def _async_create_ha_bridges(
 
     # For wash-WashtowerDevice, we need to create two ha bridges.
     if isinstance(connect_device, WashtowerDevice):
-        dryer_device = connect_device.get_sub_device(Location.DRYER)
-        dryer_ha_bridge = HABridge(dryer_device, sub_id=Location.DRYER)
-
-        washer_device = connect_device.get_sub_device(Location.WASHER)
-        washer_ha_bridge = HABridge(washer_device, sub_id=Location.WASHER)
-
+        dryer_ha_bridge = HABridge(connect_device, sub_id=Location.DRYER)
+        washer_ha_bridge = HABridge(connect_device, sub_id=Location.WASHER)
         return [dryer_ha_bridge, washer_ha_bridge]
 
     return [HABridge(connect_device)]

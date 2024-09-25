@@ -1,22 +1,28 @@
-from __future__ import annotations
-
 """
     * SPDX-FileCopyrightText: Copyright 2024 LG Electronics Inc.
     * SPDX-License-Identifier: Apache-2.0
 """
-"""The extended property interface for Home Assistant."""
 
-import inspect
-from enum import Enum, auto
+# The extended property interface for Home Assistant.
+
+from __future__ import annotations
+
 from collections import deque
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import time
+from enum import Enum, auto
+import inspect
 from typing import Any
 
-from thinqconnect import PROPERTY_READABLE, PROPERTY_WRITABLE, ConnectBaseDevice
-from thinqconnect.devices.const import Location
-from thinqconnect.devices.const import Property as ThinQPropety
+from thinqconnect import (
+    PROPERTY_READABLE,
+    PROPERTY_WRITABLE,
+    ConnectBaseDevice,
+    ThinQAPIException,
+)
+from thinqconnect.devices.const import Location, Property as ThinQPropety
+
 
 
 class ActiveMode(Enum):
@@ -74,6 +80,10 @@ class PropertyHolder:
 
         if self.data_type == "boolean" and data is True:
             return ["false", "true"]
+
+        if self.key == ThinQPropety.WIND_STEP and self.data_type == "range":
+            if self.min is not None and self.max is not None:
+                return [str(i) for i in range(self.min, self.max + 1)]
 
         return None
 
@@ -164,12 +174,15 @@ class PropertyHolder:
 
     def get_value(self) -> Any:
         """Return the value of property."""
-        if self.key not in ThinQPropety:
+        status = self.api.get_status(self.key)  # type: ignore[arg-type]
+        if status is None:
             return None
 
-        status = self.api.get_status(ThinQPropety(self.key))
-        if status is not None and self.data_type in ["enum", "boolean"]:
+        if self.data_type in ["enum", "boolean"]:
             return str(status).lower()
+
+        if self.key == ThinQPropety.WIND_STEP and self.data_type == "range":
+            return str(status)
 
         return status
 
@@ -207,7 +220,8 @@ class PropertyHolder:
         if isinstance(value, str):
             if self.data_type == "enum":
                 return value.upper()
-
+            if self.data_type == "range":
+                return int(value)
             if self.data_type == "boolean" and value in ("false", "true"):
                 return value == "true"
 
@@ -253,6 +267,8 @@ class PropertyState:
         self.fan_mode: str | None = None
         self.humidity: int | None = None
         self.support_temperature_range: bool = False
+        self.current_state: str | None = None
+        self.battery: str | None = None
 
     @property
     def options(self) -> list[str] | None:
@@ -410,13 +426,15 @@ class SelectivePropertyState(PropertyState):
     def update(self) -> None:
         """Update the state."""
         for _ in range(len(self.holders)):
-            if (
-                isinstance(value := self.holders[0].get_value(), dict)
-                and (data := value.get(self.origin_key)) is not None
-            ):
-                self.value = data
-                self.is_on = PropertyHolder.to_boolean_value(data)
-                self.unit = value.get("unit")
+            # For target_temperature type dict
+            if isinstance(value := self.holders[0].get_value(), dict):
+                if (data := value.get(self.origin_key)) is not None:
+                    self.value = data
+                    self.is_on = PropertyHolder.to_boolean_value(data)
+                    self.unit = value.get("unit")
+                    return
+            elif value is not None:
+                self.value = value
                 return
 
             self.holders.rotate(-1)
@@ -436,9 +454,11 @@ class SelectivePropertyState(PropertyState):
 class TimerPropertyStateSpec:
     """A specification to create timer property state."""
 
-    hour_key: str
+    hour_key: str | None = None
     minute_key: str
+    second_key: str | None = None
     time_format: str | None = None
+    setter: Callable[[ConnectBaseDevice, time | None], Awaitable[None]] | None = None
 
 
 class TimerPropertyState(PropertyState):
@@ -446,39 +466,88 @@ class TimerPropertyState(PropertyState):
 
     def __init__(
         self,
-        hour_holder: PropertyHolder,
+        hour_holder: PropertyHolder | None,
         minute_holder: PropertyHolder,
+        second_holder: PropertyHolder | None,
         *,
         time_format: str | None = None,
+        setter: (
+            Callable[[ConnectBaseDevice, time | None], Awaitable[None]] | None
+        ) = None,
     ) -> None:
         """Set up a state."""
-        super().__init__([hour_holder, minute_holder])
+        super().__init__(
+            [hour_holder, minute_holder]
+            if hour_holder is not None
+            else [minute_holder, second_holder]
+        )
 
         self.hour_holder = hour_holder
         self.minute_holder = minute_holder
+        self.second_holder = second_holder
         self.time_format = "%H:%M" if time_format is None else time_format
+        self.setter = setter
 
     @property
     def location(self) -> str | None:
         """Return the location."""
         # Since all holders must be in the same location,
-        # we only need to check the hour_holder's location.
-        return self.hour_holder.location
+        # we only need to check the minute_holder's location.
+        return self.minute_holder.location
 
     def update(self) -> None:
         """Update the state."""
-        hour = self.hour_holder.get_value()
-        minute = self.minute_holder.get_value()
+        hour = self.hour_holder.get_value() if self.hour_holder is not None else None
+        minute = (
+            self.minute_holder.get_value() if self.minute_holder is not None else None
+        )
+        second = (
+            self.second_holder.get_value() if self.second_holder is not None else None
+        )
 
         if not isinstance(hour, int):
-            hour = 0
+            hour = None
         if not isinstance(minute, int):
-            minute = 0
+            minute = None
+        if not isinstance(second, int):
+            second = None
+        if hour is not None and minute is not None and second is not None:
+            self.value = time(hour, minute, second).strftime("%H:%M:%S")
+        elif hour is not None and minute is not None:
+            self.value = time(hour, minute).strftime(self.time_format)
+        elif minute is not None and second is not None:
+            self.value = f"{minute:0>2}:{second:0>2}"
+        else:
+            self.value = None
 
-        self.value = time(hour, minute).strftime(self.time_format)
+    def str_to_time(self, time_string: str) -> time | None:
+        """Convert the given string to time."""
+        hour, _, minute = time_string.partition(":")
+        if hour and minute:
+            try:
+                return time(hour=int(hour), minute=int(minute))
+            except (ValueError, TypeError):
+                return None
+
+        return None
 
     async def async_set(self, value: Any) -> None:
         """Set the value of state."""
+        if not self.setter:
+            raise ThinQAPIException("0001", "The control command is not supported.", {})
+
+        if not value:
+            # Reset timer.
+            await self.setter(self.hour_holder.api, None)
+            return
+
+        if (converted := self.str_to_time(value)) is not None:
+            # Set timer.
+            await self.setter(self.hour_holder.api, converted)
+        else:
+            raise ThinQAPIException(
+                "0001", "The input value is not in the correct format.", {}
+            )
 
     def dump(self) -> str:
         """Dump the current status."""
@@ -678,4 +747,81 @@ class ClimatePropertyState(PropertyState):
             holder_dumps.append(f"{self.fan_mode_holder.dump()},")
         if self.humidity_holder is not None:
             holder_dumps.append(f"{self.humidity_holder.dump()}")
+        return "".join(holder_dumps)
+
+
+@dataclass(kw_only=True, frozen=True)
+class ExtendedPropertyStateSpec:
+    """A specification to create fan, vacuum property state."""
+
+    # vacuum
+    state_key: str | None = None
+    battery_keys: tuple[str, ...] = field(default_factory=tuple)
+    operation_mode_key: str | None = None
+    # fan
+    power_key: str | None = None
+    fan_mode_key: str | None = None
+
+
+class ExtendedPropertyState(PropertyState):
+    """A class that implementats state that has vacuum properties."""
+
+    def __init__(
+        self,
+        state_holder: PropertyHolder | None = None,
+        battery_holders: Iterable[PropertyHolder] | None = None,
+        clean_operation_mode_holder: PropertyHolder | None = None,
+        power_holder: PropertyHolder | None = None,
+        fan_mode_holder: PropertyHolder | None = None,
+    ) -> None:
+        """Set up a state."""
+        super().__init__()
+
+        self.state_holder = state_holder
+        self.battery_holders = deque(battery_holders) if battery_holders else deque()
+        self.clean_operation_mode_holder = clean_operation_mode_holder
+        self.power_holder = power_holder
+        self.fan_mode_holder = fan_mode_holder
+
+    @property
+    def fan_modes(self) -> list[str]:
+        """Return the fan modes."""
+        if self.fan_mode_holder is None:
+            return []
+
+        return self.fan_mode_holder.options or []
+
+    def update(self) -> None:
+        """Update the state."""
+        if self.state_holder is not None:
+            self.current_state = self.state_holder.get_value()
+        if self.battery_holders is not None:
+            for _ in range(len(self.battery_holders)):
+                if (value := self.battery_holders[0].get_value()) is not None:
+                    self.battery = value
+                    break
+                self.battery_holders.rotate(-1)
+
+        if self.power_holder is not None:
+            self.is_on = self.power_holder.get_value_as_bool()
+        if self.fan_mode_holder is not None:
+            self.fan_mode = self.fan_mode_holder.get_value()
+
+    async def async_set(self, value: Any) -> None:
+        """Set the value of state."""
+        if self.power_holder is not None:
+            await self.power_holder.async_set(value)
+
+    def dump(self) -> str:
+        """Dump the current status."""
+        holder_dumps: list[str] = []
+        holder_dumps.append("ExtendedPropertyStateSpec(")
+        if self.state_holder is not None:
+            holder_dumps.append(f"{self.state_holder.dump()},")
+        if self.battery_holders:
+            holder_dumps.append(f"{self.battery_holders[0].dump()},")
+        if self.power_holder is not None:
+            holder_dumps.append(f"{self.power_holder.dump()},")
+        if self.fan_mode_holder is not None:
+            holder_dumps.append(f"{self.fan_mode_holder.dump()},")
         return "".join(holder_dumps)
