@@ -24,7 +24,6 @@ from thinqconnect import (
 from thinqconnect.devices.const import Location, Property as ThinQPropety
 
 
-
 class ActiveMode(Enum):
     """A list of mode that represents read-write mode of property/state."""
 
@@ -83,7 +82,7 @@ class PropertyHolder:
 
         if self.key == ThinQPropety.WIND_STEP and self.data_type == "range":
             if self.min is not None and self.max is not None:
-                return [str(i) for i in range(self.min, self.max + 1)]
+                return [str(i) for i in range(int(self.min), int(self.max) + 1)]
 
         return None
 
@@ -252,10 +251,9 @@ class PropertyHolder:
 class PropertyState:
     """A class that represents state of property."""
 
-    def __init__(self, holders: Iterable[PropertyHolder] | None = None) -> None:
+    def __init__(self, holders: Iterable[PropertyHolder | None] | None = None) -> None:
         """Set up a state."""
-        self.mode = None
-        self.holders = deque(holders) if holders else deque()
+        self.holders = self.retrieve_holders(holders)
         self.value: Any = None
         self.unit: str | None = None
         self.is_on: bool | None = None
@@ -269,6 +267,17 @@ class PropertyState:
         self.support_temperature_range: bool = False
         self.current_state: str | None = None
         self.battery: str | None = None
+
+    def retrieve_holders(
+        self, holders: Iterable[PropertyHolder | None] | None
+    ) -> deque[PropertyHolder]:
+        """Return the deque from the given iterable."""
+        if holders:
+            holder_list = [holder for holder in holders if holder is not None]
+            if holder_list:
+                return deque(holder_list)
+
+        return deque()
 
     @property
     def options(self) -> list[str] | None:
@@ -374,7 +383,7 @@ class SinglePropertyState(PropertyState):
 
     async def async_set(self, value: Any) -> None:
         """Set the value of state."""
-        return await self.holders[0].async_set(value)
+        await self.holders[0].async_set(value)
 
     def dump(self) -> str:
         """Dump the current status."""
@@ -441,7 +450,7 @@ class SelectivePropertyState(PropertyState):
 
     async def async_set(self, value: Any) -> None:
         """Set the value of state."""
-        return await self.holders[0].async_set(value)
+        await self.holders[0].async_set(value)
 
     def dump(self) -> str:
         """Dump the current status."""
@@ -455,7 +464,7 @@ class TimerPropertyStateSpec:
     """A specification to create timer property state."""
 
     hour_key: str | None = None
-    minute_key: str
+    minute_key: str | None = None
     second_key: str | None = None
     time_format: str | None = None
     setter: Callable[[ConnectBaseDevice, time | None], Awaitable[None]] | None = None
@@ -476,16 +485,11 @@ class TimerPropertyState(PropertyState):
         ) = None,
     ) -> None:
         """Set up a state."""
-        super().__init__(
-            [hour_holder, minute_holder]
-            if hour_holder is not None
-            else [minute_holder, second_holder]
-        )
-
+        super().__init__([hour_holder, minute_holder, second_holder])
         self.hour_holder = hour_holder
         self.minute_holder = minute_holder
         self.second_holder = second_holder
-        self.time_format = "%H:%M" if time_format is None else time_format
+        self.time_format = self.create_time_format_if_needed(time_format)
         self.setter = setter
 
     @property
@@ -520,6 +524,20 @@ class TimerPropertyState(PropertyState):
         else:
             self.value = None
 
+    def create_time_format_if_needed(self, time_format: str | None) -> str:
+        """Return the default time format."""
+        if time_format:
+            return time_format
+
+        time_format_list: list[str] = []
+        if self.hour_holder is not None:
+            time_format_list.append("%H")
+        if self.minute_holder is not None:
+            time_format_list.append("%M")
+        if self.second_holder is not None:
+            time_format_list.append("%S")
+        return ":".join(time_format_list)
+
     def str_to_time(self, time_string: str) -> time | None:
         """Convert the given string to time."""
         hour, _, minute = time_string.partition(":")
@@ -538,12 +556,12 @@ class TimerPropertyState(PropertyState):
 
         if not value:
             # Reset timer.
-            await self.setter(self.hour_holder.api, None)
+            await self.setter(self.minute_holder.api, None)
             return
 
         if (converted := self.str_to_time(value)) is not None:
             # Set timer.
-            await self.setter(self.hour_holder.api, converted)
+            await self.setter(self.minute_holder.api, converted)
         else:
             raise ThinQAPIException(
                 "0001", "The input value is not in the correct format.", {}
@@ -553,7 +571,12 @@ class TimerPropertyState(PropertyState):
         """Dump the current status."""
         messages: list[str] = []
         messages.append(f"TimerPropertyState(format={self.time_format}/")
-        messages.append(f"{self.hour_holder.dump()},{self.minute_holder.dump()})")
+        if self.hour_holder is not None:
+            messages.append(f"{self.hour_holder.dump()},")
+        if self.minute_holder is not None:
+            messages.append(f"{self.minute_holder.dump()},")
+        if self.second_holder is not None:
+            messages.append(f"{self.second_holder.dump()},")
         return "".join(messages)
 
 
@@ -621,55 +644,62 @@ class ClimatePropertyState(PropertyState):
             and self.target_temp_high_range_holder is not None
         )
 
+    def get_target_temp_holder(self) -> PropertyHolder | None:
+        """Select and return target temperature holder based on hvac mode."""
+        if self.support_temperature_range and self.hvac_mode == "cool":
+            return self.target_temp_high_range_holder
+        if self.support_temperature_range and self.hvac_mode == "heat":
+            return self.target_temp_low_range_holder
+        if self.hvac_mode in ("cool", "heat"):
+            return self.target_temp_holder
+
+        return None
+
+    def get_target_temp_low_holder(self) -> PropertyHolder | None:
+        """Select and return target temperature low holder based on hvac mode."""
+        if self.support_temperature_range and self.hvac_mode == "auto":
+            return self.target_temp_low_range_holder
+
+        return None
+
+    def get_target_temp_high_holder(self) -> PropertyHolder | None:
+        """Select and return target temperature low holder based on hvac mode."""
+        if self.support_temperature_range and self.hvac_mode == "auto":
+            return self.target_temp_high_range_holder
+
+        return None
+
     @property
     def min(self) -> float | None:
         """Return the minimim value."""
-        if (
-            self.support_temperature_range
-            and self.hvac_mode == "auto"
-            and self.target_temp_low_range_holder is not None
-        ):
-            return self.target_temp_low_range_holder.min
+        if (target_temp_holder := self.get_target_temp_holder()) is not None:
+            return target_temp_holder.min
+        if (target_temp_low_holder := self.get_target_temp_low_holder()) is not None:
+            return target_temp_low_holder.min
 
-        if self.hvac_mode == "cool" and self.target_temp_low_holder is not None:
-            return self.target_temp_low_holder.min
-        if self.hvac_mode == "heat" and self.target_temp_high_holder is not None:
-            return self.target_temp_high_holder.min
-
-        return self.target_temp_holder.min
+        return None
 
     @property
     def max(self) -> float | None:
         """Return the maximum value."""
-        if (
-            self.support_temperature_range
-            and self.hvac_mode == "auto"
-            and self.target_temp_high_range_holder is not None
-        ):
-            return self.target_temp_high_range_holder.max
+        if (target_temp_holder := self.get_target_temp_holder()) is not None:
+            return target_temp_holder.max
+        if (target_temp_high_holder := self.get_target_temp_high_holder()) is not None:
+            return target_temp_high_holder.max
 
-        if self.hvac_mode == "cool" and self.target_temp_low_holder is not None:
-            return self.target_temp_low_holder.max
-        if self.hvac_mode == "heat" and self.target_temp_high_holder is not None:
-            return self.target_temp_high_holder.max
-
-        return self.target_temp_holder.max
+        return None
 
     @property
     def step(self) -> float | None:
         """Return the step value."""
-        if self.support_temperature_range and self.hvac_mode == "auto":
-            if self.target_temp_low_range_holder is not None:
-                return self.target_temp_low_range_holder.step
-            if self.target_temp_high_range_holder is not None:
-                return self.target_temp_high_range_holder.step
+        if (target_temp_holder := self.get_target_temp_holder()) is not None:
+            return target_temp_holder.step
+        if (target_temp_low_holder := self.get_target_temp_low_holder()) is not None:
+            return target_temp_low_holder.step
+        if (target_temp_high_holder := self.get_target_temp_high_holder()) is not None:
+            return target_temp_high_holder.step
 
-        if self.hvac_mode == "cool" and self.target_temp_low_holder is not None:
-            return self.target_temp_low_holder.step
-        if self.hvac_mode == "heat" and self.target_temp_high_holder is not None:
-            return self.target_temp_high_holder.step
-
-        return self.target_temp_holder.step
+        return None
 
     @property
     def location(self) -> str | None:
@@ -697,23 +727,22 @@ class ClimatePropertyState(PropertyState):
         self.hvac_mode = self.hvac_mode_holder.get_value()
         self.current_temp = self.current_temp_holder.get_value()
 
-        if self.support_temperature_range and self.hvac_mode == "auto":
-            # Device operates in two_set temperature mode.
-            if self.target_temp_low_range_holder is not None:
-                self.target_temp_low = self.target_temp_low_range_holder.get_value()
-            if self.target_temp_high_range_holder is not None:
-                self.target_temp_high = self.target_temp_high_range_holder.get_value()
-            if self.unit_range_holder is not None:
-                self.unit = self.unit_range_holder.get_value()
-        else:
-            self.target_temp = self.target_temp_holder.get_value()
+        # Set all target temp as 'None' first.
+        self.target_temp = None
+        self.target_temp_high = None
+        self.target_temp_low = None
 
-            if self.unit_holder is not None:
-                self.unit = self.unit_holder.get_value()
+        if (target_temp_holder := self.get_target_temp_holder()) is not None:
+            self.target_temp = target_temp_holder.get_value()
+        if (traget_temp_low_holder := self.get_target_temp_low_holder()) is not None:
+            self.target_temp_low = traget_temp_low_holder.get_value()
+        if (traget_temp_high_holder := self.get_target_temp_high_holder()) is not None:
+            self.target_temp_high = traget_temp_high_holder.get_value()
 
+        if self.unit_holder is not None:
+            self.unit = self.unit_holder.get_value()
         if self.fan_mode_holder is not None:
             self.fan_mode = self.fan_mode_holder.get_value()
-
         if self.humidity_holder is not None:
             self.humidity = self.humidity_holder.get_value()
 

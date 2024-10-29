@@ -51,7 +51,7 @@ class WashcomboDevice(WasherSubDevice):
         location: str,
     ):
         super().__init__(
-            profiles=WasherSubProfile(profile=profile, location_name=location),
+            profiles=WasherSubProfile(profile=profile, location_name=location, use_sub_notification=True),
             location_name=location,
             single_unit=True,
             thinq_api=thinq_api,

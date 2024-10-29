@@ -332,7 +332,7 @@ class HABridge:
         self.device = device
         self.sub_id = sub_id
 
-        self.locations = [None, *list(self.device.profiles.locations)]
+        self.locations: list[str | None] = [None, *list(self.device.profiles.locations)]
 
         # The idx map contains all idenfiers in order to get property states.
         # - idx == "{key}", for non-location property.
@@ -397,7 +397,7 @@ class HABridge:
                     self.state_map[idx] = selective_state
 
     def _create_selective_state(
-        self, spec: SelectivePropertyStateSpec, location: str
+        self, spec: SelectivePropertyStateSpec, location: str | None
     ) -> SelectivePropertyState | None:
         """Create selective state if possible."""
         holders = [
@@ -418,7 +418,7 @@ class HABridge:
                     self.state_map[idx] = climate_state
 
     def _create_climate_state(
-        self, spec: ClimatePropertyStateSpec, location: str
+        self, spec: ClimatePropertyStateSpec, location: str | None
     ) -> ClimatePropertyState | None:
         """Create climate state if possible."""
         # Power and HVAC mode are required.
@@ -488,7 +488,7 @@ class HABridge:
                     self.state_map[idx] = state
 
     def _create_extended_state(
-        self, spec: ExtendedPropertyStateSpec, location: str
+        self, spec: ExtendedPropertyStateSpec, location: str | None
     ) -> ExtendedPropertyState | None:
         """Create vacuum state if possible."""
         # vacuum's state, battery, operation_mode.
@@ -497,12 +497,16 @@ class HABridge:
             if spec.state_key is not None
             else None
         )
-        if spec.battery_keys is not None:
-            battery_holder = [
+
+        battery_holder = (
+            [
                 holder
                 for battery_key in spec.battery_keys
                 if (holder := self._get_holder(battery_key, location)) is not None
             ]
+            if spec.battery_keys is not None
+            else None
+        )
 
         clean_operation_mode_holder = (
             self._get_holder(spec.operation_mode_key, location)
@@ -604,10 +608,6 @@ class HABridge:
             and state.can_activate(active_mode)
         ]
 
-    async def setup_data(self) -> dict[str, PropertyState]:
-        """Get state map."""
-        return self.state_map
-
     async def fetch_data(self) -> dict[str, PropertyState]:
         """Fetch data from API endpoint."""
         if (
@@ -623,9 +623,12 @@ class HABridge:
 
         return self.state_map
 
-    def update_status(self, status: dict[str, Any]) -> dict[str, PropertyState] | None:
+    def update_status(
+        self, status: dict[str, Any] | None
+    ) -> dict[str, PropertyState] | None:
         """Update data manually."""
-        self.device.update_status(status)
+        if status is not None:
+            self.device.update_status(status)
 
         # Update all states.
         for state in self.state_map.values():
@@ -661,14 +664,11 @@ class HABridge:
 
     async def async_set_target_temperature(self, idx: str, value: float) -> None:
         """Set target temperature."""
-        if isinstance(state := self.state_map.get(idx), ClimatePropertyState):
-            if state.hvac_mode == "cool" and state.target_temp_low_holder is not None:
-                return await state.target_temp_low_holder.async_set(value)
-
-            if state.hvac_mode == "heat" and state.target_temp_high_holder is not None:
-                return await state.target_temp_high_holder.async_set(value)
-
-            return await state.target_temp_holder.async_set(value)
+        if (
+            isinstance(state := self.state_map.get(idx), ClimatePropertyState)
+            and (holder := state.get_target_temp_holder()) is not None
+        ):
+            return await holder.async_set(value)
 
         raise ThinQAPIException("0001", "The control command is not supported.", {})
 
@@ -676,9 +676,9 @@ class HABridge:
         """Set cool target temperature in range mode."""
         if (
             isinstance(state := self.state_map.get(idx), ClimatePropertyState)
-            and state.target_temp_low_range_holder is not None
+            and (holder := state.get_target_temp_low_holder()) is not None
         ):
-            return await state.target_temp_low_range_holder.async_set(value)
+            return await holder.async_set(value)
 
         raise ThinQAPIException("0001", "The control command is not supported.", {})
 
@@ -686,9 +686,9 @@ class HABridge:
         """Set heat target temperature in range mode."""
         if (
             isinstance(state := self.state_map.get(idx), ClimatePropertyState)
-            and state.target_temp_high_range_holder is not None
+            and (holder := state.get_target_temp_high_holder()) is not None
         ):
-            return await state.target_temp_high_range_holder.async_set(value)
+            return await holder.async_set(value)
 
         raise ThinQAPIException("0001", "The control command is not supported.", {})
 
