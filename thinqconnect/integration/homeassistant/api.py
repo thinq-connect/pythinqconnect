@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import time
 from enum import StrEnum, auto
 from typing import Any, Final
@@ -97,6 +98,7 @@ DEVICE_TYPE_API_MAP: Final = {
     DeviceType.WINE_CELLAR: WineCellarDevice,
 }
 
+_LOGGER = logging.getLogger(__name__)
 
 class ThinQPropertyEx(StrEnum):
     """The extended property definitions for common."""
@@ -334,7 +336,7 @@ class HABridge:
 
         self.locations: list[str | None] = [None, *list(self.device.profiles.locations)]
 
-        # The idx map contains all idenfiers in order to get property states.
+        # The idx map contains all identifiers in order to get property states.
         # - idx == "{key}", for non-location property.
         # - idx == "{location}_{key}", for location property.
         self.idx_map: dict[str, list] = {}
@@ -392,7 +394,7 @@ class HABridge:
                 if (
                     selective_state := self._create_selective_state(spec, location)
                 ) is not None:
-                    # Note that seletive state can overwrite single state.
+                    # Note that selective state can overwrite single state.
                     idx = self._add_idx(key, location)
                     self.state_map[idx] = selective_state
 
@@ -726,7 +728,7 @@ class HABridge:
 async def async_get_ha_bridge_list(
     thinq_api: ThinQApi,
 ) -> list[HABridge]:
-    """Retrurns a list of bridges."""
+    """Return a list of bridges."""
     device_list = await thinq_api.async_get_device_list()
     if not device_list:
         return []
@@ -770,28 +772,34 @@ async def _async_create_ha_bridges(
     device_group_id = device_info.get("groupId")
 
     # Create new device api instance.
-    connect_device: ConnectBaseDevice = (
-        constructor(
-            thinq_api=thinq_api,
-            device_id=device_id,
-            device_type=device_type,
-            model_name=device_info.get("modelName"),
-            alias=device_info.get("alias"),
-            group_id=device_group_id,
-            reportable=device_info.get("reportable"),
-            profile=profile,
+    try:
+        connect_device: ConnectBaseDevice = (
+            constructor(
+                thinq_api=thinq_api,
+                device_id=device_id,
+                device_type=device_type,
+                model_name=device_info.get("modelName"),
+                alias=device_info.get("alias"),
+                group_id=device_group_id,
+                reportable=device_info.get("reportable"),
+                profile=profile,
+            )
+            if device_group_id
+            else constructor(
+                thinq_api=thinq_api,
+                device_id=device_id,
+                device_type=device_type,
+                model_name=device_info.get("modelName"),
+                alias=device_info.get("alias"),
+                reportable=device_info.get("reportable"),
+                profile=profile,
+            )
         )
-        if device_group_id
-        else constructor(
-            thinq_api=thinq_api,
-            device_id=device_id,
-            device_type=device_type,
-            model_name=device_info.get("modelName"),
-            alias=device_info.get("alias"),
-            reportable=device_info.get("reportable"),
-            profile=profile,
+    except Exception:
+        _LOGGER.exception(
+            "Cannot create ConnectDevice info:%s, profile:%s", device_info, profile
         )
-    )
+        return []
 
     # For wash-WashtowerDevice, we need to create two ha bridges.
     if isinstance(connect_device, WashtowerDevice):

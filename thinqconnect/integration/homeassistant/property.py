@@ -21,7 +21,7 @@ from thinqconnect import (
     ConnectBaseDevice,
     ThinQAPIException,
 )
-from thinqconnect.devices.const import Location, Property as ThinQPropety
+from thinqconnect.devices.const import Location, Property as ThinQProperty
 
 
 class ActiveMode(Enum):
@@ -80,7 +80,7 @@ class PropertyHolder:
         if self.data_type == "boolean" and data is True:
             return ["false", "true"]
 
-        if self.key == ThinQPropety.WIND_STEP and self.data_type == "range":
+        if self.key == ThinQProperty.WIND_STEP and self.data_type == "range":
             if self.min is not None and self.max is not None:
                 return [str(i) for i in range(int(self.min), int(self.max) + 1)]
 
@@ -88,7 +88,7 @@ class PropertyHolder:
 
     @property
     def min(self) -> float | None:
-        """Return the minimim value."""
+        """Return the minimum value."""
         if isinstance(data := self._get_profile_data(), dict):
             return data.get("min")
 
@@ -96,7 +96,7 @@ class PropertyHolder:
 
     @property
     def max(self) -> float | None:
-        """Return the maximim value."""
+        """Return the maximum value."""
         if isinstance(data := self._get_profile_data(), dict):
             return data.get("max")
 
@@ -180,7 +180,7 @@ class PropertyHolder:
         if self.data_type in ["enum", "boolean"]:
             return str(status).lower()
 
-        if self.key == ThinQPropety.WIND_STEP and self.data_type == "range":
+        if self.key == ThinQProperty.WIND_STEP and self.data_type == "range":
             return str(status)
 
         return status
@@ -191,8 +191,8 @@ class PropertyHolder:
 
     def get_unit(self) -> Any:
         """Return the unit on runtime."""
-        if self.key in ThinQPropety and isinstance(
-            value := self.api.get_status(ThinQPropety(self.key)), dict
+        if self.key in ThinQProperty and isinstance(
+            value := self.api.get_status(ThinQProperty(self.key)), dict
         ):
             return value.get("unit")
 
@@ -286,7 +286,7 @@ class PropertyState:
 
     @property
     def min(self) -> float | None:
-        """Return the minimim value."""
+        """Return the minimum value."""
         return None
 
     @property
@@ -344,7 +344,7 @@ class PropertyState:
 
 
 class SinglePropertyState(PropertyState):
-    """A class that implementats state that matches only one property."""
+    """A class that implements state that matches only one property."""
 
     def __init__(self, holder: PropertyHolder) -> None:
         """Set up a state."""
@@ -357,7 +357,7 @@ class SinglePropertyState(PropertyState):
 
     @property
     def min(self) -> float | None:
-        """Return the minimim value."""
+        """Return the minimum value."""
         return self.holders[0].min
 
     @property
@@ -399,7 +399,7 @@ class SelectivePropertyStateSpec:
 
 
 class SelectivePropertyState(PropertyState):
-    """A class that implementats state that select property on runtime."""
+    """A class that implements state that select property on runtime."""
 
     def __init__(self, origin_key: str, holders: Iterable[PropertyHolder]) -> None:
         """Set up a state."""
@@ -414,7 +414,7 @@ class SelectivePropertyState(PropertyState):
 
     @property
     def min(self) -> float | None:
-        """Return the minimim value."""
+        """Return the minimum value."""
         return self.holders[0].min
 
     @property
@@ -471,7 +471,7 @@ class TimerPropertyStateSpec:
 
 
 class TimerPropertyState(PropertyState):
-    """A class that implementats state that has timer properties."""
+    """A class that implements state that has timer properties."""
 
     def __init__(
         self,
@@ -582,7 +582,7 @@ class TimerPropertyState(PropertyState):
 
 @dataclass(kw_only=True, frozen=True)
 class ClimateTemperatureSpec:
-    """A specification for climate temperature controll."""
+    """A specification for climate temperature control."""
 
     current_temp_key: str
     target_temp_key: str | None = None
@@ -604,7 +604,7 @@ class ClimatePropertyStateSpec:
 
 
 class ClimatePropertyState(PropertyState):
-    """A class that implementats state that has climate properties."""
+    """A class that implements state that has climate properties."""
 
     def __init__(
         self,
@@ -671,7 +671,7 @@ class ClimatePropertyState(PropertyState):
 
     @property
     def min(self) -> float | None:
-        """Return the minimim value."""
+        """Return the minimum value."""
         if (target_temp_holder := self.get_target_temp_holder()) is not None:
             return target_temp_holder.min
         if (target_temp_low_holder := self.get_target_temp_low_holder()) is not None:
@@ -734,10 +734,10 @@ class ClimatePropertyState(PropertyState):
 
         if (target_temp_holder := self.get_target_temp_holder()) is not None:
             self.target_temp = target_temp_holder.get_value()
-        if (traget_temp_low_holder := self.get_target_temp_low_holder()) is not None:
-            self.target_temp_low = traget_temp_low_holder.get_value()
-        if (traget_temp_high_holder := self.get_target_temp_high_holder()) is not None:
-            self.target_temp_high = traget_temp_high_holder.get_value()
+        if (target_temp_low_holder := self.get_target_temp_low_holder()) is not None:
+            self.target_temp_low = target_temp_low_holder.get_value()
+        if (target_temp_high_holder := self.get_target_temp_high_holder()) is not None:
+            self.target_temp_high = target_temp_high_holder.get_value()
 
         if self.unit_holder is not None:
             self.unit = self.unit_holder.get_value()
@@ -793,7 +793,7 @@ class ExtendedPropertyStateSpec:
 
 
 class ExtendedPropertyState(PropertyState):
-    """A class that implementats state that has vacuum properties."""
+    """A class that implements state that has vacuum properties."""
 
     def __init__(
         self,

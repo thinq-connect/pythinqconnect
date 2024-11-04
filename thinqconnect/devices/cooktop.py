@@ -49,10 +49,13 @@ class CooktopSubProfile(ConnectDeviceProfile):
 
 class CooktopProfile(ConnectDeviceProfile):
     def __init__(self, profile: dict[str, Any]):
+        use_extension_property = True if "extensionProperty" in profile else False
+        resource_map = {"operation": Resource.OPERATION} if use_extension_property else {}
+        profile_map = {"operation": {"operationMode": Property.OPERATION_MODE}} if use_extension_property else {}
         super().__init__(
             profile=profile,
-            resource_map={"operation": Resource.OPERATION},
-            profile_map={"operation": {"operationMode": Property.OPERATION_MODE}},
+            resource_map=resource_map,
+            profile_map=profile_map,
             location_map={
                 "CENTER": Location.CENTER,
                 "CENTER_FRONT": Location.CENTER_FRONT,
@@ -73,7 +76,7 @@ class CooktopProfile(ConnectDeviceProfile):
                 "INDUCTION_2": Location.INDUCTION_2,
                 "SOUSVIDE_1": Location.SOUSVIDE_1,
             },
-            use_extension_property=True,
+            use_extension_property=use_extension_property,
         )
 
         for profile_property in profile.get("property", []):

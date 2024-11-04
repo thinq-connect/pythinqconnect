@@ -230,7 +230,8 @@ class ConnectDeviceProfile:
 
     def generate_properties(self, property: dict[str, Any]) -> None:
         """Get properties."""
-
+        if property is None:
+            raise ValueError("Property value is None")
         for resource, props in self._PROFILE.items():
             resource_property = property.get(resource)
             _readable = None

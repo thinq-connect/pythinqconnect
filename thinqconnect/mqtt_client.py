@@ -213,7 +213,7 @@ class ThinQMQTTClient:
         async with request("GET", url=url, timeout=client_timeout) as response:
             result = await response.text()
             if response.status != 200 or "error" in result:
-                _LOGGER.warning(
+                _LOGGER.error(
                     "Failed to call API: status=%s, result=%s",
                     response.status,
                     result,
@@ -258,7 +258,7 @@ class ThinQMQTTClient:
         try:
             connect_future = mqtt_connection.connect()
             connect_result = connect_future.result()
-            _LOGGER.warning(
+            _LOGGER.debug(
                 "Connect with session_present : %s",
                 connect_result["session_present"],
             )
@@ -276,7 +276,7 @@ class ThinQMQTTClient:
                     callback=self._on_message_received,
                 )
                 subscribe_future.result()
-                _LOGGER.warning("Complete subscription!")
+                _LOGGER.debug("Complete subscription!")
             except Exception as err:
                 _LOGGER.error("Failed to subscription: %s", err)
 
