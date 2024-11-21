@@ -100,6 +100,7 @@ DEVICE_TYPE_API_MAP: Final = {
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class ThinQPropertyEx(StrEnum):
     """The extended property definitions for common."""
 
@@ -766,7 +767,8 @@ async def _async_create_ha_bridges(
     # Get a device profile from the server.
     try:
         profile = await thinq_api.async_get_device_profile(device_id)
-    except ThinQAPIException:
+    except Exception:
+        _LOGGER.exception("Cannot create ConnectDevice no profile info:%s", device_info)
         return []
 
     device_group_id = device_info.get("groupId")

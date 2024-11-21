@@ -21,6 +21,7 @@ class AirPurifierProfile(ConnectDeviceProfile):
                 "timer": Resource.TIMER,
                 "airFlow": Resource.AIR_FLOW,
                 "airQualitySensor": Resource.AIR_QUALITY_SENSOR,
+                "filterInfo": Resource.FILTER_INFO,
             },
             profile_map={
                 "airPurifierJobMode": {
@@ -47,6 +48,9 @@ class AirPurifierProfile(ConnectDeviceProfile):
                     "humidity": Property.HUMIDITY,
                     "totalPollution": Property.TOTAL_POLLUTION,
                     "totalPollutionLevel": Property.TOTAL_POLLUTION_LEVEL,
+                },
+                "filterInfo": {
+                    "filterRemainPercent": Property.FILTER_REMAIN_PERCENT,
                 },
             },
         )

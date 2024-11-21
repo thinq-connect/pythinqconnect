@@ -52,8 +52,6 @@ class PlantCultivatorSubProfile(ConnectDeviceProfile):
                     "duration": Property.DURATION,
                     "startHour": Property.START_HOUR,
                     "startMinute": Property.START_MINUTE,
-                    "endHour": Property.END_HOUR,
-                    "endMinute": Property.END_MINUTE,
                 },
                 "temperature": {
                     "dayTargetTemperature": Property.DAY_TARGET_TEMPERATURE,

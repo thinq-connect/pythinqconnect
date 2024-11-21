@@ -95,6 +95,7 @@ class Property(StrEnum):
     EXPRESS_MODE = auto()
     FAN_SPEED = auto()
     FILTER_LIFETIME = auto()
+    FILTER_REMAIN_PERCENT = auto()
     FLAVOR_INFO = auto()
     FRESH_AIR_FILTER = auto()
     GROWTH_MODE = auto()

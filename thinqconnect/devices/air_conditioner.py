@@ -83,6 +83,7 @@ class AirConditionerProfile(ConnectDeviceProfile):
                 "filterInfo": {
                     "usedTime": Property.USED_TIME,
                     "filterLifetime": Property.FILTER_LIFETIME,
+                    "filterRemainPercent": Property.FILTER_REMAIN_PERCENT,
                 },
             },
         )

@@ -97,12 +97,11 @@ class ThinQAPIException(Exception):
         self.code = code
         self.message = message
         self.headers = headers
-        error_name = error_code_mapping.get(code, "Unknown Error")
-        super().__init__(f"Error: {error_name} ({self.code}) - {self.message}")
+        self.error_name = error_code_mapping.get(code, "UNKNOWN_ERROR")
+        super().__init__(f"Error: {self.error_name} ({self.code}) - {self.message}")
 
     def __str__(self) -> str:
-        error_name = error_code_mapping.get(self.code, "Unknown Error")
-        return f"ThinQAPIException: {error_name} ({self.code}) - {self.message}"
+        return f"ThinQAPIException: {self.error_name} ({self.code}) - {self.message}"
 
 
 class ThinQApi:
@@ -114,6 +113,7 @@ class ThinQApi:
         access_token: str,
         country_code: str,
         client_id: str,
+        mock_response: bool = False,
     ):
         """Initialize settings."""
         self._access_token = access_token
@@ -123,6 +123,7 @@ class ThinQApi:
         self._phase = "OP"
         self._country_code = country_code
         self._region_code = get_region_from_country(country_code)
+        self._mock_response = mock_response
 
     def __await__(self):
         yield from self.async_init().__await__()
@@ -297,6 +298,10 @@ class ThinQApi:
             url,
             kwargs,
         )
+
+        if self._mock_response:
+            return {"message": "Mock Response", "body": kwargs.get("json")}
+
         async with await self._async_fetch(method=method, url=url, **kwargs, headers=headers) as response:
             payload = await response.json()
             if response.ok:

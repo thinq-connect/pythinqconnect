@@ -261,7 +261,7 @@ class PropertyState:
         self.target_temp: float | None = None
         self.target_temp_high: float | None = None
         self.target_temp_low: float | None = None
-        self.hvac_mode: str | None = None
+        self.hvac_mode: str = "off"
         self.fan_mode: str | None = None
         self.humidity: int | None = None
         self.support_temperature_range: bool = False
@@ -515,14 +515,10 @@ class TimerPropertyState(PropertyState):
             minute = None
         if not isinstance(second, int):
             second = None
-        if hour is not None and minute is not None and second is not None:
-            self.value = time(hour, minute, second).strftime("%H:%M:%S")
-        elif hour is not None and minute is not None:
-            self.value = time(hour, minute).strftime(self.time_format)
-        elif minute is not None and second is not None:
-            self.value = f"{minute:0>2}:{second:0>2}"
-        else:
+        if all(v is None for v in [hour, minute, second]):
             self.value = None
+        else:
+            self.value = time(hour or 0, minute or 0, second or 0)
 
     def create_time_format_if_needed(self, time_format: str | None) -> str:
         """Return the default time format."""
@@ -559,7 +555,8 @@ class TimerPropertyState(PropertyState):
             await self.setter(self.minute_holder.api, None)
             return
 
-        if (converted := self.str_to_time(value)) is not None:
+        converted = value if isinstance(value, time) else self.str_to_time(value)
+        if converted is not None:
             # Set timer.
             await self.setter(self.minute_holder.api, converted)
         else:
@@ -603,6 +600,52 @@ class ClimatePropertyStateSpec:
     humidity_key: str | None = None
 
 
+class TemperatureHolderHelper:
+    """A helper class that select a temperature property holder that is valid."""
+
+    def __init__(
+        self,
+        range_holder: dict[str, PropertyHolder | None],
+        base_holder: dict[str, PropertyHolder | None],
+        *,
+        use_range_feature: bool = True,
+        use_wildcard_holder: bool = False,
+    ) -> None:
+        """Set up."""
+        self.range_holder = range_holder
+        self.base_holder = base_holder
+        self.use_range_feature = use_range_feature
+        self.use_wildcard_holder = use_wildcard_holder
+        self.current_holder: PropertyHolder | None = None
+        self.value: float | None = None
+
+    def update(self, hvac_mode: str) -> float | None:
+        """Update the current holder and then return the value."""
+        holder: PropertyHolder | None = None
+        value: Any = None
+
+        # In this case, use only one holder(key: "_") regardless of hvac mode.
+        if self.use_wildcard_holder:
+            hvac_mode = "_"
+
+        # First, try to get value from the range holder.
+        if (
+            self.use_range_feature
+            and (holder := self.range_holder.get(hvac_mode)) is not None
+        ):
+            value = holder.get_value()
+
+        # It still no holder or value, try to get value from the base holder.
+        if (holder is None or value is None) and (
+            holder := self.base_holder.get(hvac_mode)
+        ) is not None:
+            value = holder.get_value()
+
+        self.current_holder = holder
+        self.value = value
+        return value
+
+
 class ClimatePropertyState(PropertyState):
     """A class that implements state that has climate properties."""
 
@@ -640,34 +683,51 @@ class ClimatePropertyState(PropertyState):
         self.fan_mode_holder = fan_mode_holder
         self.humidity_holder = humidity_holder
         self.support_temperature_range = (
-            self.target_temp_low_range_holder is not None
+            self.current_temp_range_holder is not None
+            and self.target_temp_low_range_holder is not None
             and self.target_temp_high_range_holder is not None
         )
 
-    def get_target_temp_holder(self) -> PropertyHolder | None:
-        """Select and return target temperature holder based on hvac mode."""
-        if self.support_temperature_range and self.hvac_mode == "cool":
-            return self.target_temp_high_range_holder
-        if self.support_temperature_range and self.hvac_mode == "heat":
-            return self.target_temp_low_range_holder
-        if self.hvac_mode in ("cool", "heat"):
-            return self.target_temp_holder
+        # Set up temperature helpers.
+        self.current_temp_helper = TemperatureHolderHelper(
+            {"_": current_temp_range_holder},
+            {"_": current_temp_holder},
+            use_range_feature=self.support_temperature_range,
+            use_wildcard_holder=True,
+        )
+        self.target_temp_helper = TemperatureHolderHelper(
+            {
+                "cool": self.target_temp_high_range_holder,
+                "heat": self.target_temp_low_range_holder,
+            },
+            {
+                "cool": self.target_temp_holder,
+                "heat": self.target_temp_holder,
+            },
+            use_range_feature=self.support_temperature_range,
+        )
+        self.target_temp_low_helper = TemperatureHolderHelper(
+            {"auto": self.target_temp_low_range_holder},
+            {"auto": self.target_temp_low_holder},
+            use_range_feature=self.support_temperature_range,
+        )
+        self.target_temp_high_helper = TemperatureHolderHelper(
+            {"auto": self.target_temp_high_range_holder},
+            {"auto": self.target_temp_high_holder},
+            use_range_feature=self.support_temperature_range,
+        )
 
-        return None
+    def get_target_temp_holder(self) -> PropertyHolder | None:
+        """Return the current valid target temperature holder."""
+        return self.target_temp_helper.current_holder
 
     def get_target_temp_low_holder(self) -> PropertyHolder | None:
-        """Select and return target temperature low holder based on hvac mode."""
-        if self.support_temperature_range and self.hvac_mode == "auto":
-            return self.target_temp_low_range_holder
-
-        return None
+        """Return the current valid target temperature low holder."""
+        return self.target_temp_low_helper.current_holder
 
     def get_target_temp_high_holder(self) -> PropertyHolder | None:
-        """Select and return target temperature low holder based on hvac mode."""
-        if self.support_temperature_range and self.hvac_mode == "auto":
-            return self.target_temp_high_range_holder
-
-        return None
+        """Return the current valid target temperature high holder."""
+        return self.target_temp_high_helper.current_holder
 
     @property
     def min(self) -> float | None:
@@ -724,20 +784,17 @@ class ClimatePropertyState(PropertyState):
     def update(self) -> None:
         """Update the state."""
         self.is_on = self.power_holder.get_value_as_bool()
-        self.hvac_mode = self.hvac_mode_holder.get_value()
-        self.current_temp = self.current_temp_holder.get_value()
+        self.hvac_mode = self.hvac_mode_holder.get_value() or "off"
+        self.current_temp = self.current_temp_helper.update(self.hvac_mode)
 
-        # Set all target temp as 'None' first.
-        self.target_temp = None
-        self.target_temp_high = None
-        self.target_temp_low = None
-
-        if (target_temp_holder := self.get_target_temp_holder()) is not None:
-            self.target_temp = target_temp_holder.get_value()
-        if (target_temp_low_holder := self.get_target_temp_low_holder()) is not None:
-            self.target_temp_low = target_temp_low_holder.get_value()
-        if (target_temp_high_holder := self.get_target_temp_high_holder()) is not None:
-            self.target_temp_high = target_temp_high_holder.get_value()
+        if self.is_on:
+            self.target_temp = self.target_temp_helper.update(self.hvac_mode)
+            self.target_temp_low = self.target_temp_low_helper.update(self.hvac_mode)
+            self.target_temp_high = self.target_temp_high_helper.update(self.hvac_mode)
+        else:
+            self.target_temp = None
+            self.target_temp_high = None
+            self.target_temp_low = None
 
         if self.unit_holder is not None:
             self.unit = self.unit_holder.get_value()
