@@ -15,7 +15,7 @@ with open(os.path.join("README.md"), "r") as fh:
 
 setup(
     name="thinqconnect",
-    version="1.0.0",
+    version="1.0.2",
     packages=find_packages(exclude=["tests"]),
     description="ThinQ Connect Python SDK",
     author="ThinQConnect",

@@ -6,6 +6,19 @@
 The thinqconnect provides a robust interface for interacting with the [LG ThinQ Connect](https://thinq.developer.lge.com/ko/cloud/about/service/ThinQ-Connect) Open API.
 This SDK is designed to facilitate seamless integration with a range of LGE appliances, bases on [LG ThinQ Connect](https://thinq.developer.lge.com/ko/cloud/about/service/ThinQ-Connect).
 
+# Notice
+* Please note that any unofficial ThinQ Projects(especially reverse-engineered client) are subject to unannounced changes or unavailability in 2025.
+
+# Features Roadmap
+* Last Updated: December, 2024
+
+## December, 2024
+### Features
+* Power Control (Control)
+   * Washer/WashCombo/Styler
+* Filter (Status)
+   * Air Conditioner/Air Purifier
+
 # Key Features
 * Profile Retrieval: Access detailed profiles of 27 different home appliances.
 * Device Management: Query and retrieve lists of connected devices and their statuses.
@@ -140,450 +153,490 @@ For detailed information on Device Properties, please refer to the following pag
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | air\_con\_job\_mode | current\_job\_mode |
-| 2   | operation | air\_con\_operation\_mode |
-| 3   | operation |air\_clean\_operation\_mode |
-| 4   | temperature | current\_temperature |
-| 5   | temperature | target\_temperature |
-| 6   | temperature | heat\_target\_temperature |
-| 7   | temperature | cool\_target\_temperature |
-| 8   | temperature | temperature\_unit |
-| 9   | two\_set\_temperature | two\_set\_current\_temperature |
-| 10  | two\_set\_temperature | two\_set\_heat\_target\_temperature |
-| 11  | two\_set\_temperature | two\_set\_cool\_target\_temperature |
-| 12  | two\_set\_temperature | two\_set\_temperature\_unit |
-| 13  | timer | relative\_hour\_to\_start |
-| 14  | timer | relative\_minute\_to\_start |
-| 15  | timer | relative\_hour\_to\_stop |
-| 16  | timer | relative\_minute\_to\_stop |
-| 17  | timer | absolute\_hour\_to\_start |
-| 18  | timer | absolute\_minute\_to\_start |
-| 19  | timer | absolute\_hour\_to\_stop |
-| 20  | timer | absolute\_minute\_to\_stop |
-| 21  | sleep\_timer | sleep\_timer\_relative\_hour\_to\_stop |
-| 22  | sleep\_timer | sleep\_timer\_relative\_minute\_to\_stop |
-| 23  | power\_save | power\_save\_enabled |
-| 24  | air\_flow | wind\_strength |
-| 25  | air\_flow | wind\_step |
-| 26  | air\_quality\_sensor | pm1 |
-| 27  | air\_quality\_sensor | pm2 |
-| 28  | air\_quality\_sensor | pm10 |
-| 29  | air\_quality\_sensor | odor |
-| 30  | air\_quality\_sensor | humidity |
-| 31  | air\_quality\_sensor | total\_pollution |
-| 32  | air\_quality\_sensor | monitoring\_enabled |
-| 33  | filter\_info | used\_time |
-| 34  | filter\_info | filter\_lifetime |
+|    | resources             | properties                               |
+|----|-----------------------|------------------------------------------|
+|  1 | air\_con\_job\_mode   | current\_job\_mode                       |
+|  2 | operation             | air\_con\_operation\_mode                |
+|  3 | operation             | air\_clean\_operation\_mode              |
+|  4 | temperature           | current\_temperature                     |
+|  5 | temperature           | target\_temperature                      |
+|  6 | temperature           | heat\_target\_temperature                |
+|  7 | temperature           | cool\_target\_temperature                |
+|  8 | temperature           | temperature\_unit                        |
+|  9 | two\_set\_temperature | two\_set\_current\_temperature           |
+| 10 | two\_set\_temperature | two\_set\_heat\_target\_temperature      |
+| 11 | two\_set\_temperature | two\_set\_cool\_target\_temperature      |
+| 12 | two\_set\_temperature | two\_set\_temperature\_unit              |
+| 13 | timer                 | relative\_hour\_to\_start                |
+| 14 | timer                 | relative\_minute\_to\_start              |
+| 15 | timer                 | relative\_hour\_to\_stop                 |
+| 16 | timer                 | relative\_minute\_to\_stop               |
+| 17 | timer                 | absolute\_hour\_to\_start                |
+| 18 | timer                 | absolute\_minute\_to\_start              |
+| 19 | timer                 | absolute\_hour\_to\_stop                 |
+| 20 | timer                 | absolute\_minute\_to\_stop               |
+| 21 | sleep\_timer          | sleep\_timer\_relative\_hour\_to\_stop   |
+| 22 | sleep\_timer          | sleep\_timer\_relative\_minute\_to\_stop |
+| 23 | power\_save           | power\_save\_enabled                     |
+| 24 | air\_flow             | wind\_strength                           |
+| 25 | air\_flow             | wind\_step                               |
+| 26 | air\_quality\_sensor  | pm1                                      |
+| 27 | air\_quality\_sensor  | pm2                                      |
+| 28 | air\_quality\_sensor  | pm10                                     |
+| 29 | air\_quality\_sensor  | odor                                     |
+| 30 | air\_quality\_sensor  | odor\_level                              |
+| 31 | air\_quality\_sensor  | humidity                                 |
+| 32 | air\_quality\_sensor  | total\_pollution                         |
+| 33 | air\_quality\_sensor  | total\_pollution\_level                  |
+| 34 | air\_quality\_sensor  | monitoring\_enabled                      |
+| 35 | filter\_info          | used\_time                               |
+| 36 | filter\_info          | filter\_lifetime                         |
+| 37 | filter\_info          | filter\_remain\_percent                  |
+
 
 ### DEVICE\_AIR\_PURIFIER
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | air\_purifier\_job\_mode | current\_job\_mode |
-| 2   | air\_purifier\_job\_mode | personalization\_mode |
-| 3   | operation | air\_purifier\_operation\_mode |
-| 4   | timer | absolute\_hour\_to\_start |
-| 5   | timer | absolute\_minute\_to\_start |
-| 6   | timer | absolute\_hour\_to\_stop |
-| 7   | timer | absolute\_minute\_to\_stop |
-| 8   | air\_flow | wind\_strength |
-| 9   | air\_quality\_sensor | monitoring\_enabled |
-| 10  | air\_quality\_sensor | pm1 |
-| 11  | air\_quality\_sensor | pm2 |
-| 12  | air\_quality\_sensor | pm10 |
-| 13  | air\_quality\_sensor | odor |
-| 14  | air\_quality\_sensor | humidity |
-| 15  | air\_quality\_sensor | total\_pollution |
+|    | resources                | properties                     |
+|----|--------------------------|--------------------------------|
+|  1 | air\_purifier\_job\_mode | current\_job\_mode             |
+|  2 | air\_purifier\_job\_mode | personalization\_mode          |
+|  3 | operation                | air\_purifier\_operation\_mode |
+|  4 | timer                    | absolute\_hour\_to\_start      |
+|  5 | timer                    | absolute\_minute\_to\_start    |
+|  6 | timer                    | absolute\_hour\_to\_stop       |
+|  7 | timer                    | absolute\_minute\_to\_stop     |
+|  8 | air\_flow                | wind\_strength                 |
+|  9 | air\_quality\_sensor     | monitoring\_enabled            |
+| 10 | air\_quality\_sensor     | pm1                            |
+| 11 | air\_quality\_sensor     | pm2                            |
+| 12 | air\_quality\_sensor     | pm10                           |
+| 13 | air\_quality\_sensor     | odor                           |
+| 14 | air\_quality\_sensor     | odor\_level                    |
+| 15 | air\_quality\_sensor     | humidity                       |
+| 16 | air\_quality\_sensor     | total\_pollution               |
+| 17 | air\_quality\_sensor     | total\_pollution\_level        |
+| 18 | filter\_info             | filter\_remain\_percent        |
+
 
 ### DEVICE\_AIR\_PURIFIER\_FAN
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | air\_fan\_job\_mode | current\_job\_mode |
-| 2   | operation | air\_fan\_operation\_mode |
-| 3   | timer | absolute\_hour\_to\_start |
-| 4   | timer | absolute\_minute\_to\_start |
-| 5   | timer | absolute\_hour\_to\_stop |
-| 6   | timer | absolute\_minute\_to\_stop |
-| 7   | sleep\_timer | sleep\_timer\_relative\_hour\_to\_stop |
-| 8   | sleep\_timer | sleep\_timer\_relative\_minute\_to\_stop |
-| 9   | air\_flow | warm\_mode |
-| 10  | air\_flow | wind\_temperature |
-| 11  | air\_flow | wind\_strength |
-| 12  | air\_flow | wind\_angle |
-| 13  | air\_quality\_sensor | monitoring\_enabled |
-| 14  | air\_quality\_sensor | pm1 |
-| 15  | air\_quality\_sensor | pm2 |
-| 16  | air\_quality\_sensor | pm10 |
-| 17  | air\_quality\_sensor | humidity |
-| 18  | air\_quality\_sensor | temperature |
-| 19  | air\_quality\_sensor | odor |
-| 20  | air\_quality\_sensor | total\_pollution |
-| 21  | display | display\_light |
-| 22  | misc | uv\_nano |
+|    | resources            | properties                               |
+|----|----------------------|------------------------------------------|
+|  1 | air\_fan\_job\_mode  | current\_job\_mode                       |
+|  2 | operation            | air\_fan\_operation\_mode                |
+|  3 | timer                | absolute\_hour\_to\_start                |
+|  4 | timer                | absolute\_minute\_to\_start              |
+|  5 | timer                | absolute\_hour\_to\_stop                 |
+|  6 | timer                | absolute\_minute\_to\_stop               |
+|  7 | sleep\_timer         | sleep\_timer\_relative\_hour\_to\_stop   |
+|  8 | sleep\_timer         | sleep\_timer\_relative\_minute\_to\_stop |
+|  9 | air\_flow            | warm\_mode                               |
+| 10 | air\_flow            | wind\_temperature                        |
+| 11 | air\_flow            | wind\_strength                           |
+| 12 | air\_flow            | wind\_angle                              |
+| 13 | air\_quality\_sensor | monitoring\_enabled                      |
+| 14 | air\_quality\_sensor | pm1                                      |
+| 15 | air\_quality\_sensor | pm2                                      |
+| 16 | air\_quality\_sensor | pm10                                     |
+| 17 | air\_quality\_sensor | humidity                                 |
+| 18 | air\_quality\_sensor | temperature                              |
+| 19 | air\_quality\_sensor | odor                                     |
+| 20 | air\_quality\_sensor | odor\_level                              |
+| 21 | air\_quality\_sensor | total\_pollution                         |
+| 22 | air\_quality\_sensor | total\_pollution\_level                  |
+| 23 | display              | display\_light                           |
+| 24 | misc                 | uv\_nano                                 |
+
 
 ### DEVICE\_CEILING\_FAN
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | air\_flow | wind\_strength |
-| 2   | operation | ceiling\_fan\_operation\_mode |
+|    | resources   | properties                    |
+|----|-------------|-------------------------------|
+|  1 | air\_flow   | wind\_strength                |
+|  2 | operation   | ceiling\_fan\_operation\_mode |
+
 
 ### DEVICE\_COOKTOP
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | operation | operation\_mode |
+|    | resources   | properties      |
+|----|-------------|-----------------|
+|  1 | operation   | operation\_mode |
+
 
 ### Sub
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | cooking\_zone | current\_state |
-| 2   | power | power\_level |
-| 3   | remote\_control\_enable | remote\_control\_enabled |
-| 4   | timer | remain\_hour |
-| 5   | timer | remain\_minute |
+|    | resources               | properties               |
+|----|-------------------------|--------------------------|
+|  1 | cooking\_zone           | current\_state           |
+|  2 | power                   | power\_level             |
+|  3 | remote\_control\_enable | remote\_control\_enabled |
+|  4 | timer                   | remain\_hour             |
+|  5 | timer                   | remain\_minute           |
+
 
 ### DEVICE\_DEHUMIDIFIER
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | operation | dehumidifier\_operation\_mode |
-| 2   | dehumidifier\_job\_mode | current\_job\_mode |
-| 3   | humidity | current\_humidity |
-| 4   | air\_flow | wind\_strength |
+|    | resources               | properties                    |
+|----|-------------------------|-------------------------------|
+|  1 | operation               | dehumidifier\_operation\_mode |
+|  2 | dehumidifier\_job\_mode | current\_job\_mode            |
+|  3 | humidity                | current\_humidity             |
+|  4 | air\_flow               | wind\_strength                |
+
 
 ### DEVICE\_DISH\_WASHER
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | run\_state | current\_state |
-| 2   | dish\_washing\_status | rinse\_refill |
-| 3   | preference | rinse\_level |
-| 4   | preference | softening\_level |
-| 5   | preference | machine\_clean\_reminder |
-| 6   | preference | signal\_level |
-| 7   | preference | clean\_light\_reminder |
-| 8   | door\_status | door\_state |
-| 9   | operation | dish\_washer\_operation\_mode |
-| 10  | remote\_control\_enable | remote\_control\_enabled |
-| 11  | timer | relative\_hour\_to\_start |
-| 12  | timer | relative\_minute\_to\_start |
-| 13  | timer | remain\_hour |
-| 14  | timer | remain\_minute |
-| 15  | timer | total\_hour |
-| 16  | timer | total\_minute |
-| 17  | dish\_washing\_course | current\_dish\_washing\_course |
+|    | resources               | properties                     |
+|----|-------------------------|--------------------------------|
+|  1 | run\_state              | current\_state                 |
+|  2 | dish\_washing\_status   | rinse\_refill                  |
+|  3 | preference              | rinse\_level                   |
+|  4 | preference              | softening\_level               |
+|  5 | preference              | machine\_clean\_reminder       |
+|  6 | preference              | signal\_level                  |
+|  7 | preference              | clean\_light\_reminder         |
+|  8 | door\_status            | door\_state                    |
+|  9 | operation               | dish\_washer\_operation\_mode  |
+| 10 | remote\_control\_enable | remote\_control\_enabled       |
+| 11 | timer                   | relative\_hour\_to\_start      |
+| 12 | timer                   | relative\_minute\_to\_start    |
+| 13 | timer                   | remain\_hour                   |
+| 14 | timer                   | remain\_minute                 |
+| 15 | timer                   | total\_hour                    |
+| 16 | timer                   | total\_minute                  |
+| 17 | dish\_washing\_course   | current\_dish\_washing\_course |
+
 
 ### DEVICE\_DRYER
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | run\_state | current\_state |
-| 2   | operation | dryer\_operation\_mode |
-| 3   | remote\_control\_enable | remote\_control\_enabled |
-| 4   | timer | remain\_hour |
-| 5   | timer | remain\_minute |
-| 6   | timer | total\_hour |
-| 7   | timer | total\_minute |
-| 8   | timer | relative\_hour\_to\_stop |
-| 9   | timer | relative\_minute\_to\_stop |
-| 10  | timer | relative\_hour\_to\_start |
-| 11  | timer | relative\_minute\_to\_start |
+|    | resources               | properties                  |
+|----|-------------------------|-----------------------------|
+|  1 | run\_state              | current\_state              |
+|  2 | operation               | dryer\_operation\_mode      |
+|  3 | remote\_control\_enable | remote\_control\_enabled    |
+|  4 | timer                   | remain\_hour                |
+|  5 | timer                   | remain\_minute              |
+|  6 | timer                   | total\_hour                 |
+|  7 | timer                   | total\_minute               |
+|  8 | timer                   | relative\_hour\_to\_stop    |
+|  9 | timer                   | relative\_minute\_to\_stop  |
+| 10 | timer                   | relative\_hour\_to\_start   |
+| 11 | timer                   | relative\_minute\_to\_start |
+
 
 ### DEVICE\_HOME\_BREW
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | run\_state | current\_state |
-| 2   | recipe | beer\_remain |
-| 3   | recipe | flavor\_info |
-| 4   | recipe | hop\_oil\_info |
-| 5   | recipe | wort\_info |
-| 6   | recipe | yeast\_info |
-| 7   | recipe | recipe\_name |
-| 8   | timer | elapsed\_day\_state |
-| 9   | timer | elapsed\_day\_total |
+|    | resources   | properties          |
+|----|-------------|---------------------|
+|  1 | run\_state  | current\_state      |
+|  2 | recipe      | beer\_remain        |
+|  3 | recipe      | flavor\_info        |
+|  4 | recipe      | hop\_oil\_info      |
+|  5 | recipe      | wort\_info          |
+|  6 | recipe      | yeast\_info         |
+|  7 | recipe      | recipe\_name        |
+|  8 | timer       | elapsed\_day\_state |
+|  9 | timer       | elapsed\_day\_total |
+
 
 ### DEVICE\_HOOD
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | ventilation | fan\_speed |
-| 2   | lamp | lamp\_brightness |
-| 3   | operation | hood\_operation\_mode |
-| 4   | timer | remain\_minute |
-| 5   | timer | remain\_second |
+|    | resources   | properties            |
+|----|-------------|-----------------------|
+|  1 | ventilation | fan\_speed            |
+|  2 | lamp        | lamp\_brightness      |
+|  3 | operation   | hood\_operation\_mode |
+|  4 | timer       | remain\_minute        |
+|  5 | timer       | remain\_second        |
+
 
 ### DEVICE\_HUMIDIFIER
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | humidifier\_job\_mode | current\_job\_mode |
-| 2   | operation | humidifier\_operation\_mode |
-| 3   | operation | auto\_mode |
-| 4   | operation | sleep\_mode |
-| 5   | operation | hygiene\_dry\_mode |
-| 6   | timer | absolute\_hour\_to\_start |
-| 7   | timer | absolute\_hour\_to\_stop |
-| 8   | timer | absolute\_minute\_to\_start |
-| 9   | timer | absolute\_minute\_to\_stop |
-| 10  | sleep\_timer | sleep\_timer\_relative\_hour\_to\_stop |
-| 11  | sleep\_timer | sleep\_timer\_relative\_minute\_to\_stop |
-| 12  | humidity | target\_humidity |
-| 13  | humidity | warm\_mode |
-| 14  | air\_flow | wind\_strength |
-| 15  | air\_quality\_sensor | monitoring\_enabled |
-| 16  | air\_quality\_sensor | total\_pollution |
-| 17  | air\_quality\_sensor | pm1 |
-| 18  | air\_quality\_sensor | pm2 |
-| 19  | air\_quality\_sensor | pm10 |
-| 20  | air\_quality\_sensor | humidity |
-| 21  | air\_quality\_sensor | temperature |
-| 22  | display | display\_light |
-| 23  | mood\_lamp | mood\_lamp\_state |
+|    | resources             | properties                               |
+|----|-----------------------|------------------------------------------|
+|  1 | humidifier\_job\_mode | current\_job\_mode                       |
+|  2 | operation             | humidifier\_operation\_mode              |
+|  3 | operation             | auto\_mode                               |
+|  4 | operation             | sleep\_mode                              |
+|  5 | operation             | hygiene\_dry\_mode                       |
+|  6 | timer                 | absolute\_hour\_to\_start                |
+|  7 | timer                 | absolute\_hour\_to\_stop                 |
+|  8 | timer                 | absolute\_minute\_to\_start              |
+|  9 | timer                 | absolute\_minute\_to\_stop               |
+| 10 | sleep\_timer          | sleep\_timer\_relative\_hour\_to\_stop   |
+| 11 | sleep\_timer          | sleep\_timer\_relative\_minute\_to\_stop |
+| 12 | humidity              | target\_humidity                         |
+| 13 | humidity              | warm\_mode                               |
+| 14 | air\_flow             | wind\_strength                           |
+| 15 | air\_quality\_sensor  | monitoring\_enabled                      |
+| 16 | air\_quality\_sensor  | total\_pollution                         |
+| 17 | air\_quality\_sensor  | total\_pollution\_level                  |
+| 18 | air\_quality\_sensor  | pm1                                      |
+| 19 | air\_quality\_sensor  | pm2                                      |
+| 20 | air\_quality\_sensor  | pm10                                     |
+| 21 | air\_quality\_sensor  | humidity                                 |
+| 22 | air\_quality\_sensor  | temperature                              |
+| 23 | display               | display\_light                           |
+| 24 | mood\_lamp            | mood\_lamp\_state                        |
+
 
 ### DEVICE\_KIMCHI\_REFRIGERATOR
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | refrigeration | one\_touch\_filter |
-| 2   | refrigeration | fresh\_air\_filter |
+|    | resources     | properties         |
+|----|---------------|--------------------|
+|  1 | refrigeration | one\_touch\_filter |
+|  2 | refrigeration | fresh\_air\_filter |
+
 
 ### Sub
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | temperature | target\_temperature |
+|    | resources   | properties          |
+|----|-------------|---------------------|
+|  1 | temperature | target\_temperature |
+
 
 ### DEVICE\_MICROWAVE\_OVEN
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | run\_state | current\_state |
-| 2   | timer | remain\_minute |
-| 3   | timer | remain\_second |
-| 4   | ventilation | fan\_speed |
-| 5   | lamp | lamp\_brightness |
+|    | resources   | properties       |
+|----|-------------|------------------|
+|  1 | run\_state  | current\_state   |
+|  2 | timer       | remain\_minute   |
+|  3 | timer       | remain\_second   |
+|  4 | ventilation | fan\_speed       |
+|  5 | lamp        | lamp\_brightness |
+
 
 ### DEVICE\_OVEN
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | info | oven\_type |
+|    | resources   | properties   |
+|----|-------------|--------------|
+|  1 | info        | oven\_type   |
+
 
 ### Sub
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | run\_state | current\_state |
-| 2   | operation | oven\_operation\_mode |
-| 3   | cook | cook\_mode |
-| 4   | remote\_control\_enable | remote\_control\_enabled |
-| 5   | temperature | target\_temperature\_c |
-| 6   | temperature | target\_temperature\_f |
-| 7   | timer | remain\_hour |
-| 8   | timer | remain\_minute |
-| 9   | timer | remain\_second |
-| 10  | timer | target\_hour |
-| 11  | timer | target\_minute |
-| 12  | timer | target\_second |
-| 13  | timer | timer\_hour |
-| 14  | timer | timer\_minute |
-| 15  | timer | timer\_second |
+|    | resources               | properties               |
+|----|-------------------------|--------------------------|
+|  1 | run\_state              | current\_state           |
+|  2 | operation               | oven\_operation\_mode    |
+|  3 | cook                    | cook\_mode               |
+|  4 | remote\_control\_enable | remote\_control\_enabled |
+|  5 | temperature             | target\_temperature\_c   |
+|  6 | temperature             | target\_temperature\_f   |
+|  7 | timer                   | remain\_hour             |
+|  8 | timer                   | remain\_minute           |
+|  9 | timer                   | remain\_second           |
+| 10 | timer                   | target\_hour             |
+| 11 | timer                   | target\_minute           |
+| 12 | timer                   | target\_second           |
+| 13 | timer                   | timer\_hour              |
+| 14 | timer                   | timer\_minute            |
+| 15 | timer                   | timer\_second            |
+
 
 ### DEVICE\_PLANT\_CULTIVATOR
 
-### Main - Empty
+### Main
+
+Empty
+
 
 ### Sub
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | run\_state | current\_state |
-| 2   | run\_state | growth\_mode |
-| 3   | run\_state | wind\_volume |
-| 4   | light | brightness |
-| 5   | light | duration |
-| 6   | light | start\_hour |
-| 7   | light | start\_minute |
-| 8   | light | end\_hour |
-| 9   | light | end\_minute |
-| 10  | temperature | day\_target\_temperature |
-| 11  | temperature | night\_target\_temperature |
-| 12  | temperature | temperature\_state |
+|    | resources   | properties                 |
+|----|-------------|----------------------------|
+|  1 | run\_state  | current\_state             |
+|  2 | run\_state  | growth\_mode               |
+|  3 | run\_state  | wind\_volume               |
+|  4 | light       | brightness                 |
+|  5 | light       | duration                   |
+|  6 | light       | start\_hour                |
+|  7 | light       | start\_minute              |
+|  8 | temperature | day\_target\_temperature   |
+|  9 | temperature | night\_target\_temperature |
+| 10 | temperature | temperature\_state         |
+
 
 ### DEVICE\_REFRIGERATOR
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | power\_save | power\_save\_enabled |
-| 2   | eco\_friendly | eco\_friendly\_mode |
-| 3   | sabbath | sabbath\_mode |
-| 4   | refrigeration | rapid\_freeze |
-| 5   | refrigeration | express\_mode |
-| 6   | refrigeration | fresh\_air\_filter |
-| 7   | water\_filter\_info | used\_time |
-| 8   | water\_filter\_info | water\_filter\_info\_unit |
+|    | resources           | properties                |
+|----|---------------------|---------------------------|
+|  1 | power\_save         | power\_save\_enabled      |
+|  2 | eco\_friendly       | eco\_friendly\_mode       |
+|  3 | sabbath             | sabbath\_mode             |
+|  4 | refrigeration       | rapid\_freeze             |
+|  5 | refrigeration       | express\_mode             |
+|  6 | refrigeration       | fresh\_air\_filter        |
+|  7 | water\_filter\_info | used\_time                |
+|  8 | water\_filter\_info | water\_filter\_info\_unit |
+
 
 ### Sub
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | door\_status | door\_state |
-| 2   | temperature | location\_name |
-| 3   | temperature | target\_temperature |
-| 4   | temperature | temperature\_unit |
+|    | resources    | properties          |
+|----|--------------|---------------------|
+|  1 | door\_status | door\_state         |
+|  2 | temperature  | target\_temperature |
+|  3 | temperature  | temperature\_unit   |
+
 
 ### DEVICE\_ROBOT\_CLEANER
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | run\_state | current\_state |
-| 2   | robot\_cleaner\_job\_mode | current\_job\_mode |
-| 3   | operation | clean\_operation\_mode |
-| 4   | battery | battery\_level |
-| 5   | battery | battery\_percent |
-| 6   | timer | absolute\_hour\_to\_start |
-| 7   | timer | absolute\_minute\_to\_start |
-| 8   | timer | running\_hour |
-| 9   | rtimer | unning\_minute |
+|    | resources                 | properties                  |
+|----|---------------------------|-----------------------------|
+|  1 | run\_state                | current\_state              |
+|  2 | robot\_cleaner\_job\_mode | current\_job\_mode          |
+|  3 | operation                 | clean\_operation\_mode      |
+|  4 | battery                   | battery\_level              |
+|  5 | battery                   | battery\_percent            |
+|  6 | timer                     | absolute\_hour\_to\_start   |
+|  7 | timer                     | absolute\_minute\_to\_start |
+|  8 | timer                     | running\_hour               |
+|  9 | timer                     | running\_minute             |
+
 
 ### DEVICE\_STICK\_CLEANER
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | run\_state | current\_state |
-| 2   | stick\_cleaner\_job\_mode | current\_job\_mode |
-| 3   | battery | battery\_level |
+|    | resources                 | properties         |
+|----|---------------------------|--------------------|
+|  1 | run\_state                | current\_state     |
+|  2 | stick\_cleaner\_job\_mode | current\_job\_mode |
+|  3 | battery                   | battery\_level     |
+|  4 | battery                   | battery\_percent   |
+
 
 ### DEVICE\_STYLER
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | run\_state | current\_state |
-| 2   | operation | styler\_operation\_mode |
-| 3   | remote\_control\_enable | remote\_control\_enabled |
-| 4   | timer | relative\_hour\_to\_stop |
-| 5   | timer | relative\_minute\_to\_stop |
-| 6   | timer | remain\_hour |
-| 7   | timer | remain\_minute |
-| 8   | timer | total\_hour |
-| 9   | timer | total\_minute |
+|    | resources               | properties                 |
+|----|-------------------------|----------------------------|
+|  1 | run\_state              | current\_state             |
+|  2 | operation               | styler\_operation\_mode    |
+|  3 | remote\_control\_enable | remote\_control\_enabled   |
+|  4 | timer                   | relative\_hour\_to\_stop   |
+|  5 | timer                   | relative\_minute\_to\_stop |
+|  6 | timer                   | remain\_hour               |
+|  7 | timer                   | remain\_minute             |
+|  8 | timer                   | total\_hour                |
+|  9 | timer                   | total\_minute              |
+
 
 ### DEVICE\_SYSTEM\_BOILER
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | boiler\_job\_mode | current\_job\_mode |
-| 2   | operation | boiler\_operation\_mode |
-| 3   | operation | hot\_water\_mode |
-| 4   | temperature | current\_temperature |
-| 5   | temperature | target\_temperature |
-| 6   | temperature | heat\_target\_temperature |
-| 7   | temperature | cool\_target\_temperature |
-| 8   | temperature | heat\_max\_temperature |
-| 9   | temperature | heat\_min\_temperature |
-| 10  | temperature | cool\_max\_temperature |
-| 11  | temperature | cool\_min\_temperature |
-| 12  | temperature | temperature\_unit |
+|    | resources         | properties                |
+|----|-------------------|---------------------------|
+|  1 | boiler\_job\_mode | current\_job\_mode        |
+|  2 | operation         | boiler\_operation\_mode   |
+|  3 | operation         | hot\_water\_mode          |
+|  4 | temperature       | current\_temperature      |
+|  5 | temperature       | target\_temperature       |
+|  6 | temperature       | heat\_target\_temperature |
+|  7 | temperature       | cool\_target\_temperature |
+|  8 | temperature       | heat\_max\_temperature    |
+|  9 | temperature       | heat\_min\_temperature    |
+| 10 | temperature       | cool\_max\_temperature    |
+| 11 | temperature       | cool\_min\_temperature    |
+| 12 | temperature       | temperature\_unit         |
+
 
 ### DEVICE\_WASHER
 
-### Main - Empty
+### Main
+
+Empty
+
 
 ### Sub
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | run\_state | current\_state |
-| 2   | operation | washer\_operation\_mode |
-| 3   | remote\_control\_enable | remote\_control\_enabled |
-| 4   | timer | remain\_hour |
-| 5   | timer | remain\_minute |
-| 6   | timer | total\_hour |
-| 7   | timer | total\_minute |
-| 8   | timer | relative\_hour\_to\_stop |
-| 9   | timer | relative\_minute\_to\_stop |
-| 10  | timer | relative\_hour\_to\_start |
-| 11  | timer | relative\_minute\_to\_start |
-| 12  | detergent | detergent\_setting |
+|    | resources               | properties                  |
+|----|-------------------------|-----------------------------|
+|  1 | run\_state              | current\_state              |
+|  2 | operation               | washer\_operation\_mode     |
+|  3 | remote\_control\_enable | remote\_control\_enabled    |
+|  4 | timer                   | remain\_hour                |
+|  5 | timer                   | remain\_minute              |
+|  6 | timer                   | total\_hour                 |
+|  7 | timer                   | total\_minute               |
+|  8 | timer                   | relative\_hour\_to\_stop    |
+|  9 | timer                   | relative\_minute\_to\_stop  |
+| 10 | timer                   | relative\_hour\_to\_start   |
+| 11 | timer                   | relative\_minute\_to\_start |
+| 12 | detergent               | detergent\_setting          |
+
 
 ### DEVICE\_WATER\_HEATER
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | water\_heater\_job\_mode | current\_job\_mode |
-| 2   | operation | water\_heater\_operation\_mode |
-| 3   | temperature | current\_temperature |
-| 4   | temperature | target\_temperature |
+|    | resources                | properties                     |
+|----|--------------------------|--------------------------------|
+|  1 | water\_heater\_job\_mode | current\_job\_mode             |
+|  2 | operation                | water\_heater\_operation\_mode |
+|  3 | temperature              | current\_temperature           |
+|  4 | temperature              | target\_temperature            |
+
 
 ### DEVICE\_WATER\_PURIFIER
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | run\_state | cock\_state |
-| 2   | run\_state | sterilizing\_state |
-| 3   | water\_info | water\_type |
+|    | resources   | properties         |
+|----|-------------|--------------------|
+|  1 | run\_state  | cock\_state        |
+|  2 | run\_state  | sterilizing\_state |
+|  3 | water\_info | water\_type        |
+
 
 ### DEVICE\_WINE\_CELLAR
 
 ### Main
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | operation | light\_brightness |
-| 2   | operation | optimal\_humidity |
-| 3   | operation | sabbath\_mode |
-| 4   | operation | light\_status |
+|    | resources   | properties        |
+|----|-------------|-------------------|
+|  1 | operation   | light\_brightness |
+|  2 | operation   | optimal\_humidity |
+|  3 | operation   | sabbath\_mode     |
+|  4 | operation   | light\_status     |
+
 
 ### Sub
 
-|     | resources | properties |
-| --- | --- | --- |
-| 1   | temperature | location\_name |
-| 2   | temperature | target\_temperature |
-| 3   | temperature | temperature\_unit |
+|    | resources   | properties          |
+|----|-------------|---------------------|
+|  1 | temperature | target\_temperature |
+|  2 | temperature | temperature\_unit   |

@@ -292,11 +292,11 @@ class ThinQApi:
         url = self._get_url_from_endpoint(endpoint)
         headers = self._generate_headers(kwargs.pop("headers", {}))
         _LOGGER.debug(
-            "async_request. method=%s, headers=%s, url=%s, kwargs=%s",
+            "async_request. method=%s, headers={x-message-id=%s, country=%s}, url=%s",
             method,
-            headers,
+            headers.get("x-message-id"),
+            headers.get("x-country"),
             url,
-            kwargs,
         )
 
         if self._mock_response:
