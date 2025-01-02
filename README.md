@@ -3,8 +3,8 @@
 
 # Project Description
 
-The thinqconnect provides a robust interface for interacting with the [LG ThinQ Connect](https://thinq.developer.lge.com/ko/cloud/about/service/ThinQ-Connect) Open API.
-This SDK is designed to facilitate seamless integration with a range of LGE appliances, bases on [LG ThinQ Connect](https://thinq.developer.lge.com/ko/cloud/about/service/ThinQ-Connect).
+The thinqconnect provides a robust interface for interacting with the [LG ThinQ API](https://smartsolution.developer.lge.com/en/apiManage/thinq_connect?s=1734332700509) Open API.
+This SDK is designed to facilitate seamless integration with a range of LGE appliances, bases on [LG ThinQ API](https://smartsolution.developer.lge.com/en/apiManage/thinq_connect?s=1734332700509).
 
 # Notice
 * Please note that any unofficial ThinQ Projects(especially reverse-engineered client) are subject to unannounced changes or unavailability in 2025.
@@ -43,7 +43,7 @@ Follow the steps below to get your token and configure your environment.
 Steps to Obtain a Personal Access Token
 
 1.	Sign Up or Log In:
-    * Visit the [LG ThinQ Developer Site](https://thinq.developer.lge.com).
+    * Visit the [LG ThinQ Developer Site](https://smartsolution.developer.lge.com/en/apiManage/thinq_connect?s=1734332700509).
 2.	Navigate to Cloud Developer:
 	* After logging in, go to the Cloud Developer section.
 3.	Navigate to Docs.
@@ -146,7 +146,7 @@ Ensure that you keep your Personal Access Token and Client ID secure and do not 
 Apache License
 
 # Available Device Types and Properties
-For detailed information on Device Properties, please refer to the following page: [LG ThinQ Connect - Device Profile](https://thinq.developer.lge.com/ko/cloud/docs/thinq-connect/device-profile)
+For detailed information on Device Properties, please refer to the following page: [LG ThinQ API - Device Profile](https://smartsolution.developer.lge.com/en/apiManage/device_profile?s=1734593490507)
 
 
 ### DEVICE\_AIR\_CONDITIONER
