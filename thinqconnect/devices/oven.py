@@ -64,6 +64,7 @@ class OvenSubProfile(ConnectSubDeviceProfile):
                 "temperature": {
                     "C": Property.TARGET_TEMPERATURE_C,
                     "F": Property.TARGET_TEMPERATURE_F,
+                    "unit": Property.TEMPERATURE_UNIT,
                 },
                 "timer": {
                     "remainHour": Property.REMAIN_HOUR,
@@ -102,15 +103,26 @@ class OvenSubProfile(ConnectSubDeviceProfile):
             return readable_props, writable_props
 
         temperature_map = self._PROFILE[resource_key]
+        units = []
         for _temperature in resource_property:
-            if _temperature["unit"] in temperature_map:
-                attr_name = temperature_map[_temperature["unit"]]
+            _temperature_unit = _temperature["unit"]
+            if _temperature_unit in temperature_map:
+                attr_name = temperature_map[_temperature_unit]
                 prop = self._get_properties(_temperature, "targetTemperature")
                 self._set_prop_attr(attr_name, prop)
                 if prop[READABILITY]:
                     readable_props.append(attr_name)
                 if prop[WRITABILITY]:
                     writable_props.append(attr_name)
+                units.append(_temperature_unit)
+
+        prop_attr = props.get("unit")
+        prop = self._get_readonly_enum_property(units)
+        if prop[READABILITY]:
+            readable_props.append(str(prop_attr))
+        if prop[WRITABILITY]:
+            writable_props.append(str(prop_attr))
+        self._set_prop_attr(prop_attr, prop)
 
         return readable_props, writable_props
 
@@ -167,36 +179,37 @@ class OvenSubDevice(ConnectSubDevice):
             "second": self.get_status("timer_second"),
         }
 
-    def _set_custom_resources(self, attribute: str, resource_status: dict[str, str]) -> bool:
+    def _set_custom_resources(
+        self,
+        prop_key: str,
+        attribute: str,
+        resource_status: dict[str, str] | list[dict[str, str]],
+        is_updated: bool = False,
+    ) -> bool:
+        if attribute is Property.TEMPERATURE_UNIT:
+            return True
+
         temperature_map = self.profiles._PROFILE["temperature"]
         _temp_status_value = resource_status.get("targetTemperature")
         _temp_status_unit = resource_status.get("unit")
 
         if not _temp_status_unit:
-            _temp_status_unit = self._temp_unit
             self._set_status_attr(
-                temperature_map.get(_temp_status_unit),
-                {
-                    "target_temperature": _temp_status_value,
-                    "unit": _temp_status_unit,
-                },
+                temperature_map.get(self._temp_unit),
+                _temp_status_value,
             )
             return True
 
         _temp_attr_name = temperature_map.get(_temp_status_unit)
         if attribute == _temp_attr_name:
             self._temp_unit = _temp_status_unit
-            _attribute_value = {
-                "target_temperature": _temp_status_value,
-                "unit": _temp_status_unit,
-            }
-        elif attribute in temperature_map.values():
-            _attribute_value = {
-                "target_temperature": None,
-                "unit": list(temperature_map.keys())[list(temperature_map.values()).index(attribute)],
-            }
+            self._set_status_attr(Property.TEMPERATURE_UNIT, self._temp_unit)
+            _attribute_value = _temp_status_value
+        elif is_updated:
+            return True
         else:
             _attribute_value = None
+
         self._set_status_attr(attribute, _attribute_value)
         return True
 

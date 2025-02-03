@@ -8,8 +8,8 @@ from typing import Any
 
 from ..thinq_api import ThinQApi
 from .connect_device import (
-    READABLE_VALUES,
-    WRITABLE_VALUES,
+    READABILITY,
+    WRITABILITY,
     ConnectDeviceProfile,
     ConnectMainDevice,
     ConnectSubDevice,
@@ -23,14 +23,15 @@ class WineCellarSubProfile(ConnectSubDeviceProfile):
         super().__init__(
             profile=profile,
             location_name=location_name,
-            resource_map={"temperature": Resource.TEMPERATURE},
+            resource_map={"temperatureInUnits": Resource.TEMPERATURE},
             profile_map={
-                "temperature": {
-                    "targetTemperature": Property.TARGET_TEMPERATURE,
+                "temperatureInUnits": {
+                    "targetTemperatureC": Property.TARGET_TEMPERATURE_C,
+                    "targetTemperatureF": Property.TARGET_TEMPERATURE_F,
                     "unit": Property.TEMPERATURE_UNIT,
                 },
             },
-            custom_resources=["temperature"],
+            custom_resources=["temperatureInUnits"],
         )
 
     def _generate_custom_resource_properties(
@@ -45,14 +46,14 @@ class WineCellarSubProfile(ConnectSubDeviceProfile):
         for _location_property in resource_property:
             if _location_property["locationName"] != self._location_name:
                 continue
-            for _property_key in self._PROFILE[resource_key].keys():
-                attr_name = self._PROFILE[resource_key][_property_key]
-                prop = self._get_properties(_location_property, _property_key)
-                self._set_prop_attr(attr_name, prop)
-                if prop[READABLE_VALUES]:
-                    readable_props.append(attr_name)
-                if prop[WRITABLE_VALUES]:
-                    writable_props.append(attr_name)
+            for prop_key, prop_attr in props.items():
+                prop = self._get_properties(_location_property, prop_key)
+                prop.pop("unit", None)
+                if prop[READABILITY]:
+                    readable_props.append(str(prop_attr))
+                if prop[WRITABILITY]:
+                    writable_props.append(str(prop_attr))
+                self._set_prop_attr(prop_attr, prop)
 
         return readable_props, writable_props
 
@@ -75,10 +76,10 @@ class WineCellarProfile(ConnectDeviceProfile):
                     "lightStatus": Property.LIGHT_STATUS,
                 },
             },
-            custom_resources=["temperature"],
+            custom_resources=["temperatureInUnits"],
         )
 
-        for location_property in profile.get("property", {}).get("temperature", []):
+        for location_property in profile.get("property", {}).get("temperatureInUnits", []):
             location_name = location_property.get("locationName")
             if location_name in self._LOCATION_MAP.keys():
                 attr_key = self._LOCATION_MAP[location_name]
@@ -117,19 +118,38 @@ class WineCellarSubDevice(ConnectSubDevice):
     def profiles(self) -> WineCellarSubProfile:
         return self._profiles
 
-    async def set_target_temperature(self, temperature: float) -> dict | None:
-        _resource_key = "temperature"
-        _target_temperature_key, _unit_key = self.get_property_keys(_resource_key, ["targetTemperature", "unit"])
+    def _set_custom_resources(
+        self,
+        prop_key: str,
+        attribute: str,
+        resource_status: dict[str, str] | list[dict[str, str]],
+        is_updated: bool = False,
+    ) -> bool:
+        if is_updated and attribute in [Property.TARGET_TEMPERATURE_C, Property.TARGET_TEMPERATURE_F]:
+            current_unit = resource_status.get("unit") or self.get_status(Property.TEMPERATURE_UNIT)
+            if attribute[-1:].upper() == current_unit:
+                self._set_status_attr(attribute, value=resource_status.get(prop_key))
+            return True
+        return False
+
+    async def _set_target_temperature(self, temperature: float, unit: str) -> dict | None:
+        _resource_key = "temperatureInUnits"
+        _target_temperature_key = self.get_property_key(_resource_key, "targetTemperature" + unit)
 
         _payload = self.profiles.get_range_attribute_payload(_target_temperature_key, temperature)
         _payload[_resource_key] = dict(
             {
                 "locationName": self._location_name,
-                "unit": self.get_status(_unit_key),
             },
             **(_payload[_resource_key]),
         )
         return await self._do_attribute_command(_payload)
+
+    async def set_target_temperature_c(self, temperature: float) -> dict | None:
+        return await self._set_target_temperature(temperature, "C")
+
+    async def set_target_temperature_f(self, temperature: float) -> dict | None:
+        return await self._set_target_temperature(temperature, "F")
 
 
 class WineCellarDevice(ConnectMainDevice):

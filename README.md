@@ -9,15 +9,28 @@ This SDK is designed to facilitate seamless integration with a range of LGE appl
 # Notice
 * Please note that any unofficial ThinQ Projects(especially reverse-engineered client) are subject to unannounced changes or unavailability in 2025.
 
-# Features Roadmap
-* Last Updated: December, 2024
+# Features Roadmap - 2025
 
-## December, 2024
+### Devices
+* Ventilator
+* ShoeCare
+* ShoeCase
+* TBD
+
 ### Features
-* Power Control (Control)
-   * Washer/WashCombo/Styler
-* Filter (Status)
-   * Air Conditioner/Air Purifier
+* Energy: Power Consumption
+    * The provided power consumption may vary by country and device.
+
+### Profiles
+* Display Light (Status/Control)
+    * Air Conditioner
+* Washing Cycle Count (Status)
+    * Washer/WashTower/WashCombo
+* Wind Direction (Status/Control)
+    * Air Conditioner
+* Room/Water Temperature Mode (Status)
+    * System Boiler
+* TBD
 
 # Key Features
 * Profile Retrieval: Access detailed profiles of 27 different home appliances.
@@ -158,40 +171,49 @@ For detailed information on Device Properties, please refer to the following pag
 |  1 | air\_con\_job\_mode   | current\_job\_mode                       |
 |  2 | operation             | air\_con\_operation\_mode                |
 |  3 | operation             | air\_clean\_operation\_mode              |
-|  4 | temperature           | current\_temperature                     |
-|  5 | temperature           | target\_temperature                      |
-|  6 | temperature           | heat\_target\_temperature                |
-|  7 | temperature           | cool\_target\_temperature                |
-|  8 | temperature           | temperature\_unit                        |
-|  9 | two\_set\_temperature | two\_set\_current\_temperature           |
-| 10 | two\_set\_temperature | two\_set\_heat\_target\_temperature      |
-| 11 | two\_set\_temperature | two\_set\_cool\_target\_temperature      |
-| 12 | two\_set\_temperature | two\_set\_temperature\_unit              |
-| 13 | timer                 | relative\_hour\_to\_start                |
-| 14 | timer                 | relative\_minute\_to\_start              |
-| 15 | timer                 | relative\_hour\_to\_stop                 |
-| 16 | timer                 | relative\_minute\_to\_stop               |
-| 17 | timer                 | absolute\_hour\_to\_start                |
-| 18 | timer                 | absolute\_minute\_to\_start              |
-| 19 | timer                 | absolute\_hour\_to\_stop                 |
-| 20 | timer                 | absolute\_minute\_to\_stop               |
-| 21 | sleep\_timer          | sleep\_timer\_relative\_hour\_to\_stop   |
-| 22 | sleep\_timer          | sleep\_timer\_relative\_minute\_to\_stop |
-| 23 | power\_save           | power\_save\_enabled                     |
-| 24 | air\_flow             | wind\_strength                           |
-| 25 | air\_flow             | wind\_step                               |
-| 26 | air\_quality\_sensor  | pm1                                      |
-| 27 | air\_quality\_sensor  | pm2                                      |
-| 28 | air\_quality\_sensor  | pm10                                     |
-| 29 | air\_quality\_sensor  | odor                                     |
-| 30 | air\_quality\_sensor  | odor\_level                              |
-| 31 | air\_quality\_sensor  | humidity                                 |
-| 32 | air\_quality\_sensor  | total\_pollution                         |
-| 33 | air\_quality\_sensor  | total\_pollution\_level                  |
-| 34 | air\_quality\_sensor  | monitoring\_enabled                      |
-| 35 | filter\_info          | used\_time                               |
-| 36 | filter\_info          | filter\_lifetime                         |
-| 37 | filter\_info          | filter\_remain\_percent                  |
+|  4 | temperature           | current\_temperature\_c                  |
+|  5 | temperature           | current\_temperature\_f                  |
+|  6 | temperature           | target\_temperature\_c                   |
+|  7 | temperature           | target\_temperature\_f                   |
+|  8 | temperature           | heat\_target\_temperature\_c             |
+|  9 | temperature           | heat\_target\_temperature\_f             |
+| 10 | temperature           | cool\_target\_temperature\_c             |
+| 11 | temperature           | cool\_target\_temperature\_f             |
+| 12 | temperature           | temperature\_unit                        |
+| 13 | two\_set\_temperature | two\_set\_enabled                        |
+| 14 | two\_set\_temperature | two\_set\_heat\_target\_temperature\_c   |
+| 15 | two\_set\_temperature | two\_set\_heat\_target\_temperature\_f   |
+| 16 | two\_set\_temperature | two\_set\_cool\_target\_temperature\_c   |
+| 17 | two\_set\_temperature | two\_set\_cool\_target\_temperature\_f   |
+| 18 | two\_set\_temperature | two\_set\_temperature\_unit              |
+| 19 | timer                 | relative\_hour\_to\_start                |
+| 20 | timer                 | relative\_minute\_to\_start              |
+| 21 | timer                 | relative\_hour\_to\_stop                 |
+| 22 | timer                 | relative\_minute\_to\_stop               |
+| 23 | timer                 | absolute\_hour\_to\_start                |
+| 24 | timer                 | absolute\_minute\_to\_start              |
+| 25 | timer                 | absolute\_hour\_to\_stop                 |
+| 26 | timer                 | absolute\_minute\_to\_stop               |
+| 27 | sleep\_timer          | sleep\_timer\_relative\_hour\_to\_stop   |
+| 28 | sleep\_timer          | sleep\_timer\_relative\_minute\_to\_stop |
+| 29 | power\_save           | power\_save\_enabled                     |
+| 30 | air\_flow             | wind\_strength                           |
+| 31 | air\_flow             | wind\_step                               |
+| 32 | air\_quality\_sensor  | pm1                                      |
+| 33 | air\_quality\_sensor  | pm2                                      |
+| 34 | air\_quality\_sensor  | pm10                                     |
+| 35 | air\_quality\_sensor  | odor                                     |
+| 36 | air\_quality\_sensor  | odor\_level                              |
+| 37 | air\_quality\_sensor  | humidity                                 |
+| 38 | air\_quality\_sensor  | total\_pollution                         |
+| 39 | air\_quality\_sensor  | total\_pollution\_level                  |
+| 40 | air\_quality\_sensor  | monitoring\_enabled                      |
+| 41 | filter\_info          | used\_time                               |
+| 42 | filter\_info          | filter\_lifetime                         |
+| 43 | filter\_info          | filter\_remain\_percent                  |
+| 44 | display               | display\_light                           |
+| 45 | wind\_direction       | wind\_rotate\_up\_down                   |
+| 46 | wind\_direction       | wind\_rotate\_left\_right                |
 
 
 ### DEVICE\_AIR\_PURIFIER
@@ -342,17 +364,21 @@ For detailed information on Device Properties, please refer to the following pag
 
 ### Main
 
-|    | resources   | properties          |
-|----|-------------|---------------------|
-|  1 | run\_state  | current\_state      |
-|  2 | recipe      | beer\_remain        |
-|  3 | recipe      | flavor\_info        |
-|  4 | recipe      | hop\_oil\_info      |
-|  5 | recipe      | wort\_info          |
-|  6 | recipe      | yeast\_info         |
-|  7 | recipe      | recipe\_name        |
-|  8 | timer       | elapsed\_day\_state |
-|  9 | timer       | elapsed\_day\_total |
+|    | resources   | properties           |
+|----|-------------|----------------------|
+|  1 | run\_state  | current\_state       |
+|  2 | recipe      | beer\_remain         |
+|  3 | recipe      | flavor\_info         |
+|  4 | recipe      | flavor\_capsule\_1   |
+|  5 | recipe      | flavor\_capsule\_2   |
+|  6 | recipe      | hop\_oil\_info       |
+|  7 | recipe      | hop\_oil\_capsule\_1 |
+|  8 | recipe      | hop\_oil\_capsule\_2 |
+|  9 | recipe      | wort\_info           |
+| 10 | recipe      | yeast\_info          |
+| 11 | recipe      | recipe\_name         |
+| 12 | timer       | elapsed\_day\_state  |
+| 13 | timer       | elapsed\_day\_total  |
 
 
 ### DEVICE\_HOOD
@@ -364,8 +390,6 @@ For detailed information on Device Properties, please refer to the following pag
 |  1 | ventilation | fan\_speed            |
 |  2 | lamp        | lamp\_brightness      |
 |  3 | operation   | hood\_operation\_mode |
-|  4 | timer       | remain\_minute        |
-|  5 | timer       | remain\_second        |
 
 
 ### DEVICE\_HUMIDIFIER
@@ -449,15 +473,16 @@ For detailed information on Device Properties, please refer to the following pag
 |  4 | remote\_control\_enable | remote\_control\_enabled |
 |  5 | temperature             | target\_temperature\_c   |
 |  6 | temperature             | target\_temperature\_f   |
-|  7 | timer                   | remain\_hour             |
-|  8 | timer                   | remain\_minute           |
-|  9 | timer                   | remain\_second           |
-| 10 | timer                   | target\_hour             |
-| 11 | timer                   | target\_minute           |
-| 12 | timer                   | target\_second           |
-| 13 | timer                   | timer\_hour              |
-| 14 | timer                   | timer\_minute            |
-| 15 | timer                   | timer\_second            |
+|  7 | temperature             | temperature\_unit        |
+|  8 | timer                   | remain\_hour             |
+|  9 | timer                   | remain\_minute           |
+| 10 | timer                   | remain\_second           |
+| 11 | timer                   | target\_hour             |
+| 12 | timer                   | target\_minute           |
+| 13 | timer                   | target\_second           |
+| 14 | timer                   | timer\_hour              |
+| 15 | timer                   | timer\_minute            |
+| 16 | timer                   | timer\_second            |
 
 
 ### DEVICE\_PLANT\_CULTIVATOR
@@ -494,18 +519,21 @@ Empty
 |  3 | sabbath             | sabbath\_mode             |
 |  4 | refrigeration       | rapid\_freeze             |
 |  5 | refrigeration       | express\_mode             |
-|  6 | refrigeration       | fresh\_air\_filter        |
-|  7 | water\_filter\_info | used\_time                |
-|  8 | water\_filter\_info | water\_filter\_info\_unit |
+|  6 | refrigeration       | express\_mode\_name       |
+|  7 | refrigeration       | express\_fridge           |
+|  8 | refrigeration       | fresh\_air\_filter        |
+|  9 | water\_filter\_info | used\_time                |
+| 10 | water\_filter\_info | water\_filter\_info\_unit |
 
 
 ### Sub
 
-|    | resources    | properties          |
-|----|--------------|---------------------|
-|  1 | door\_status | door\_state         |
-|  2 | temperature  | target\_temperature |
-|  3 | temperature  | temperature\_unit   |
+|    | resources    | properties             |
+|----|--------------|------------------------|
+|  1 | door\_status | door\_state            |
+|  2 | temperature  | target\_temperature\_c |
+|  3 | temperature  | target\_temperature\_f |
+|  4 | temperature  | temperature\_unit      |
 
 
 ### DEVICE\_ROBOT\_CLEANER
@@ -558,20 +586,57 @@ Empty
 
 ### Main
 
-|    | resources         | properties                |
-|----|-------------------|---------------------------|
-|  1 | boiler\_job\_mode | current\_job\_mode        |
-|  2 | operation         | boiler\_operation\_mode   |
-|  3 | operation         | hot\_water\_mode          |
-|  4 | temperature       | current\_temperature      |
-|  5 | temperature       | target\_temperature       |
-|  6 | temperature       | heat\_target\_temperature |
-|  7 | temperature       | cool\_target\_temperature |
-|  8 | temperature       | heat\_max\_temperature    |
-|  9 | temperature       | heat\_min\_temperature    |
-| 10 | temperature       | cool\_max\_temperature    |
-| 11 | temperature       | cool\_min\_temperature    |
-| 12 | temperature       | temperature\_unit         |
+|    | resources               | properties                                |
+|----|-------------------------|-------------------------------------------|
+|  1 | boiler\_job\_mode       | current\_job\_mode                        |
+|  2 | operation               | boiler\_operation\_mode                   |
+|  3 | operation               | hot\_water\_mode                          |
+|  4 | operation               | room\_temp\_mode                          |
+|  5 | operation               | room\_water\_mode                         |
+|  6 | hot\_water\_temperature | hot\_water\_current\_temperature\_c       |
+|  7 | hot\_water\_temperature | hot\_water\_current\_temperature\_f       |
+|  8 | hot\_water\_temperature | hot\_water\_target\_temperature\_c        |
+|  9 | hot\_water\_temperature | hot\_water\_target\_temperature\_f        |
+| 10 | hot\_water\_temperature | hot\_water\_max\_temperature\_c           |
+| 11 | hot\_water\_temperature | hot\_water\_max\_temperature\_f           |
+| 12 | hot\_water\_temperature | hot\_water\_min\_temperature\_c           |
+| 13 | hot\_water\_temperature | hot\_water\_min\_temperature\_f           |
+| 14 | hot\_water\_temperature | hot\_water\_temperature\_unit             |
+| 15 | room\_temperature       | room\_current\_temperature\_c             |
+| 16 | room\_temperature       | room\_current\_temperature\_f             |
+| 17 | room\_temperature       | room\_air\_current\_temperature\_c        |
+| 18 | room\_temperature       | room\_air\_current\_temperature\_f        |
+| 19 | room\_temperature       | room\_out\_water\_current\_temperature\_c |
+| 20 | room\_temperature       | room\_out\_water\_current\_temperature\_f |
+| 21 | room\_temperature       | room\_in\_water\_current\_temperature\_c  |
+| 22 | room\_temperature       | room\_in\_water\_current\_temperature\_f  |
+| 23 | room\_temperature       | room\_target\_temperature\_c              |
+| 24 | room\_temperature       | room\_target\_temperature\_f              |
+| 25 | room\_temperature       | room\_air\_cool\_target\_temperature\_c   |
+| 26 | room\_temperature       | room\_air\_cool\_target\_temperature\_f   |
+| 27 | room\_temperature       | room\_air\_heat\_target\_temperature\_c   |
+| 28 | room\_temperature       | room\_air\_heat\_target\_temperature\_f   |
+| 29 | room\_temperature       | room\_water\_cool\_target\_temperature\_c |
+| 30 | room\_temperature       | room\_water\_cool\_target\_temperature\_f |
+| 31 | room\_temperature       | room\_water\_heat\_target\_temperature\_c |
+| 32 | room\_temperature       | room\_water\_heat\_target\_temperature\_f |
+| 33 | room\_temperature       | room\_air\_heat\_max\_temperature\_c      |
+| 34 | room\_temperature       | room\_air\_heat\_max\_temperature\_f      |
+| 35 | room\_temperature       | room\_air\_heat\_min\_temperature\_c      |
+| 36 | room\_temperature       | room\_air\_heat\_min\_temperature\_f      |
+| 37 | room\_temperature       | room\_air\_cool\_max\_temperature\_c      |
+| 38 | room\_temperature       | room\_air\_cool\_max\_temperature\_f      |
+| 39 | room\_temperature       | room\_air\_cool\_min\_temperature\_c      |
+| 40 | room\_temperature       | room\_air\_cool\_min\_temperature\_f      |
+| 41 | room\_temperature       | room\_water\_heat\_max\_temperature\_c    |
+| 42 | room\_temperature       | room\_water\_heat\_max\_temperature\_f    |
+| 43 | room\_temperature       | room\_water\_heat\_min\_temperature\_c    |
+| 44 | room\_temperature       | room\_water\_heat\_min\_temperature\_f    |
+| 45 | room\_temperature       | room\_water\_cool\_max\_temperature\_c    |
+| 46 | room\_temperature       | room\_water\_cool\_max\_temperature\_f    |
+| 47 | room\_temperature       | room\_water\_cool\_min\_temperature\_c    |
+| 48 | room\_temperature       | room\_water\_cool\_min\_temperature\_f    |
+| 49 | room\_temperature       | room\_temperature\_unit                   |
 
 
 ### DEVICE\_WASHER
@@ -597,6 +662,7 @@ Empty
 | 10 | timer                   | relative\_hour\_to\_start   |
 | 11 | timer                   | relative\_minute\_to\_start |
 | 12 | detergent               | detergent\_setting          |
+| 13 | cycle                   | cycle\_count                |
 
 
 ### DEVICE\_WATER\_HEATER
@@ -607,8 +673,11 @@ Empty
 |----|--------------------------|--------------------------------|
 |  1 | water\_heater\_job\_mode | current\_job\_mode             |
 |  2 | operation                | water\_heater\_operation\_mode |
-|  3 | temperature              | current\_temperature           |
-|  4 | temperature              | target\_temperature            |
+|  3 | temperature              | current\_temperature\_c        |
+|  4 | temperature              | current\_temperature\_f        |
+|  5 | temperature              | target\_temperature\_c         |
+|  6 | temperature              | target\_temperature\_f         |
+|  7 | temperature              | temperature\_unit              |
 
 
 ### DEVICE\_WATER\_PURIFIER
@@ -636,7 +705,8 @@ Empty
 
 ### Sub
 
-|    | resources   | properties          |
-|----|-------------|---------------------|
-|  1 | temperature | target\_temperature |
-|  2 | temperature | temperature\_unit   |
+|    | resources   | properties             |
+|----|-------------|------------------------|
+|  1 | temperature | target\_temperature\_c |
+|  2 | temperature | target\_temperature\_f |
+|  3 | temperature | temperature\_unit      |

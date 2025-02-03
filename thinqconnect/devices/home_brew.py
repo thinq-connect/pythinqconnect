@@ -21,7 +21,11 @@ class HomeBrewProfile(ConnectDeviceProfile):
                 "recipe": {
                     "beerRemain": Property.BEER_REMAIN,
                     "flavorInfo": Property.FLAVOR_INFO,
+                    "flavorCapsule1": Property.FLAVOR_CAPSULE_1,
+                    "flavorCapsule2": Property.FLAVOR_CAPSULE_2,
                     "hopOilInfo": Property.HOP_OIL_INFO,
+                    "hopOilCapsule1": Property.HOP_OIL_CAPSULE_1,
+                    "hopOilCapsule2": Property.HOP_OIL_CAPSULE_2,
                     "wortInfo": Property.WORT_INFO,
                     "yeastInfo": Property.YEAST_INFO,
                     "recipeName": Property.RECIPE_NAME,

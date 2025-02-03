@@ -19,7 +19,6 @@ class HoodProfile(ConnectDeviceProfile):
                 "ventilation": Resource.VENTILATION,
                 "lamp": Resource.LAMP,
                 "operation": Resource.OPERATION,
-                "timer": Resource.TIMER,
             },
             profile_map={
                 "ventilation": {
@@ -30,10 +29,6 @@ class HoodProfile(ConnectDeviceProfile):
                 },
                 "operation": {
                     "hoodOperationMode": Property.HOOD_OPERATION_MODE,
-                },
-                "timer": {
-                    "remainMinute": Property.REMAIN_MINUTE,
-                    "remainSecond": Property.REMAIN_SECOND,
                 },
             },
         )
@@ -65,10 +60,6 @@ class HoodDevice(ConnectBaseDevice):
     @property
     def profiles(self) -> HoodProfile:
         return self._profiles
-
-    @property
-    def remain_time(self) -> dict:
-        return {"minute": self.remain_minute, "second": self.remain_second}
 
     async def set_fan_speed_lamp_brightness(self, fan_speed: int, lamp_brightness: int) -> dict | None:
         return await self.do_multi_range_attribute_command(

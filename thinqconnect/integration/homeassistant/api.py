@@ -8,11 +8,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import time
-from enum import StrEnum, auto
+from collections.abc import Callable
 from typing import Any, Final
 
 from thinqconnect import (
+    PROPERTY_WRITABLE,
     AirConditionerDevice,
     AirPurifierDevice,
     AirPurifierFanDevice,
@@ -47,23 +47,44 @@ from thinqconnect import (
     WaterPurifierDevice,
     WineCellarDevice,
 )
-from thinqconnect.devices.const import Location, Property as ThinQProperty
+from thinqconnect.devices.const import Location
 
-from .property import (
-    ActiveMode,
-    ClimatePropertyState,
+from .property import ActiveMode, PropertyHolder
+from .specification import (
+    CLIMATE_STATE_MAP,
+    EXTENDED_STATE_MAP,
+    PROPERTY_OPTION_MAP,
+    SELECTIVE_STATE_MAP,
+    TEMPERATURE_STATE_MAP,
+    TIMER_STATE_MAP,
+    WATER_HEATER_STATE_MAP,
     ClimatePropertyStateSpec,
     ClimateTemperatureSpec,
-    ExtendedPropertyState,
+    ExtendedProperty,
     ExtendedPropertyStateSpec,
-    PropertyHolder,
-    PropertyOption,
+    PropertyStateSpec,
+    SelectivePropertyStateSpec,
+    TemperaturePropertyStateSpec,
+    ThinQPropertyEx,
+    TimerProperty,
+    TimerPropertyStateSpec,
+    WaterHeaterPropertyStateSpec,
+)
+from .state import (
+    ClimatePropertyState,
+    ExtendedPropertyState,
     PropertyState,
     SelectivePropertyState,
-    SelectivePropertyStateSpec,
     SinglePropertyState,
+    TemperaturePropertyState,
     TimerPropertyState,
-    TimerPropertyStateSpec,
+    WaterHeaterPropertyState,
+)
+from .temperature import (
+    ClimateTemperatureGroup,
+    ClimateTemperatureMap,
+    TemperatureGroup,
+    TemperatureHolders,
 )
 
 DEVICE_TYPE_API_MAP: Final = {
@@ -101,227 +122,6 @@ DEVICE_TYPE_API_MAP: Final = {
 _LOGGER = logging.getLogger(__name__)
 
 
-class ThinQPropertyEx(StrEnum):
-    """The extended property definitions for common."""
-
-    CURRENT_JOB_MODE_STICK_CLEANER = auto()
-    HUMIDITY_WARM_MODE = auto()
-    ERROR = auto()
-    NOTIFICATION = auto()
-
-
-class ExtendedProperty(StrEnum):
-    """The extended property definitions for climate."""
-
-    CLIMATE_AIR_CONDITIONER = auto()
-    CLIMATE_SYSTEM_BOILER = auto()
-    FAN = auto()
-    VACUUM = auto()
-
-
-CLIMATE_STATE_MAP = {
-    ExtendedProperty.CLIMATE_AIR_CONDITIONER: ClimatePropertyStateSpec(
-        power_key=ThinQProperty.AIR_CON_OPERATION_MODE,
-        hvac_mode_key=ThinQProperty.CURRENT_JOB_MODE,
-        temperature_specs=ClimateTemperatureSpec(
-            current_temp_key=ThinQProperty.CURRENT_TEMPERATURE,
-            target_temp_key=ThinQProperty.TARGET_TEMPERATURE,
-            target_temp_low_key=ThinQProperty.COOL_TARGET_TEMPERATURE,
-            target_temp_high_key=ThinQProperty.HEAT_TARGET_TEMPERATURE,
-            unit_key=ThinQProperty.TEMPERATURE_UNIT,
-        ),
-        temperature_range_specs=ClimateTemperatureSpec(
-            current_temp_key=ThinQProperty.TWO_SET_CURRENT_TEMPERATURE,
-            target_temp_low_key=ThinQProperty.TWO_SET_HEAT_TARGET_TEMPERATURE,
-            target_temp_high_key=ThinQProperty.TWO_SET_COOL_TARGET_TEMPERATURE,
-            unit_key=ThinQProperty.TWO_SET_TEMPERATURE_UNIT,
-        ),
-        fan_mode_keys=(ThinQProperty.WIND_STEP, ThinQProperty.WIND_STRENGTH),
-        humidity_key=ThinQProperty.HUMIDITY,
-    ),
-    ExtendedProperty.CLIMATE_SYSTEM_BOILER: ClimatePropertyStateSpec(
-        power_key=ThinQProperty.BOILER_OPERATION_MODE,
-        hvac_mode_key=ThinQProperty.CURRENT_JOB_MODE,
-        temperature_specs=ClimateTemperatureSpec(
-            current_temp_key=ThinQProperty.CURRENT_TEMPERATURE,
-            target_temp_key=ThinQProperty.TARGET_TEMPERATURE,
-            target_temp_low_key=ThinQProperty.COOL_TARGET_TEMPERATURE,
-            target_temp_high_key=ThinQProperty.HEAT_TARGET_TEMPERATURE,
-            unit_key=ThinQProperty.TEMPERATURE_UNIT,
-        ),
-    ),
-}
-
-EXTENDED_STATE_MAP = {
-    ExtendedProperty.VACUUM: ExtendedPropertyStateSpec(
-        state_key=ThinQProperty.CURRENT_STATE,
-        battery_keys=(ThinQProperty.BATTERY_PERCENT, ThinQProperty.BATTERY_LEVEL),
-        operation_mode_key=ThinQProperty.CLEAN_OPERATION_MODE,
-    ),
-    ExtendedProperty.FAN: ExtendedPropertyStateSpec(
-        power_key=ThinQProperty.CEILING_FAN_OPERATION_MODE,
-        fan_mode_key=ThinQProperty.WIND_STRENGTH,
-    ),
-}
-
-
-class TimerProperty(StrEnum):
-    """The extended property definitions for timer."""
-
-    ABSOLUTE_TO_START = auto()
-    ABSOLUTE_TO_STOP = auto()
-    LIGHT_END = auto()
-    LIGHT_START = auto()
-    RELATIVE_TO_START = auto()
-    RELATIVE_TO_START_WM = auto()
-    RELATIVE_TO_STOP = auto()
-    RELATIVE_TO_STOP_WM = auto()
-    RELATIVE_HOUR_TO_START_WM = auto()
-    RELATIVE_HOUR_TO_STOP_WM = auto()
-    SLEEP_TIMER_RELATIVE_TO_STOP = auto()
-    REMAIN = auto()
-    RUNNING = auto()
-    TARGET = auto()
-    TIMER = auto()
-    TOTAL = auto()
-
-
-async def set_absolute_time_to_start(
-    api: ConnectBaseDevice, value: time | None
-) -> None:
-    """Set an absolute start timer."""
-    if isinstance(
-        api,
-        (
-            AirConditionerDevice,
-            AirPurifierFanDevice,
-            AirPurifierDevice,
-            HumidifierDevice,
-            RobotCleanerDevice,
-        ),
-    ):
-        if value:
-            await api.set_absolute_time_to_start(value.hour, value.minute)
-        else:
-            await api.set_absolute_time_to_start(-1, -1)
-
-
-async def set_absolute_time_to_stop(api: ConnectBaseDevice, value: time | None) -> None:
-    """Set an absolute stop timer."""
-    if isinstance(
-        api,
-        (
-            AirConditionerDevice,
-            AirPurifierFanDevice,
-            AirPurifierDevice,
-            HumidifierDevice,
-        ),
-    ):
-        if value:
-            await api.set_absolute_time_to_stop(value.hour, value.minute)
-        else:
-            await api.set_absolute_time_to_stop(-1, -1)
-
-
-TIMER_STATE_MAP = {
-    TimerProperty.ABSOLUTE_TO_START: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.ABSOLUTE_HOUR_TO_START,
-        minute_key=ThinQProperty.ABSOLUTE_MINUTE_TO_START,
-        setter=set_absolute_time_to_start,
-    ),
-    TimerProperty.ABSOLUTE_TO_STOP: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.ABSOLUTE_HOUR_TO_STOP,
-        minute_key=ThinQProperty.ABSOLUTE_MINUTE_TO_STOP,
-        setter=set_absolute_time_to_stop,
-    ),
-    TimerProperty.LIGHT_END: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.END_HOUR,
-        minute_key=ThinQProperty.END_MINUTE,
-        time_format="%I:%M %p",
-    ),
-    TimerProperty.LIGHT_START: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.START_HOUR,
-        minute_key=ThinQProperty.START_MINUTE,
-        time_format="%I:%M %p",
-    ),
-    TimerProperty.RELATIVE_TO_START: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.RELATIVE_HOUR_TO_START,
-        minute_key=ThinQProperty.RELATIVE_MINUTE_TO_START,
-    ),
-    TimerProperty.RELATIVE_TO_START_WM: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.RELATIVE_HOUR_TO_START,
-        minute_key=ThinQProperty.RELATIVE_MINUTE_TO_START,
-    ),
-    TimerProperty.RELATIVE_TO_STOP: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.RELATIVE_HOUR_TO_STOP,
-        minute_key=ThinQProperty.RELATIVE_MINUTE_TO_STOP,
-    ),
-    TimerProperty.RELATIVE_TO_STOP_WM: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.RELATIVE_HOUR_TO_STOP,
-        minute_key=ThinQProperty.RELATIVE_MINUTE_TO_STOP,
-    ),
-    TimerProperty.SLEEP_TIMER_RELATIVE_TO_STOP: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.SLEEP_TIMER_RELATIVE_HOUR_TO_STOP,
-        minute_key=ThinQProperty.SLEEP_TIMER_RELATIVE_MINUTE_TO_STOP,
-    ),
-    TimerProperty.REMAIN: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.REMAIN_HOUR,
-        minute_key=ThinQProperty.REMAIN_MINUTE,
-        second_key=ThinQProperty.REMAIN_SECOND,
-    ),
-    TimerProperty.RUNNING: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.RUNNING_HOUR,
-        minute_key=ThinQProperty.RUNNING_MINUTE,
-    ),
-    TimerProperty.TARGET: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.TARGET_HOUR,
-        minute_key=ThinQProperty.TARGET_MINUTE,
-    ),
-    TimerProperty.TIMER: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.TIMER_HOUR,
-        minute_key=ThinQProperty.TIMER_MINUTE,
-    ),
-    TimerProperty.TOTAL: TimerPropertyStateSpec(
-        hour_key=ThinQProperty.TOTAL_HOUR,
-        minute_key=ThinQProperty.TOTAL_MINUTE,
-    ),
-}
-
-SELECTIVE_STATE_MAP = {
-    ThinQProperty.TARGET_TEMPERATURE: SelectivePropertyStateSpec(
-        origin_key=ThinQProperty.TARGET_TEMPERATURE,
-        selective_keys=(
-            ThinQProperty.TARGET_TEMPERATURE_C,
-            ThinQProperty.TARGET_TEMPERATURE_F,
-        ),
-    ),
-    ThinQProperty.BATTERY_PERCENT: SelectivePropertyStateSpec(
-        origin_key=ThinQProperty.BATTERY_PERCENT,
-        selective_keys=(
-            ThinQProperty.BATTERY_PERCENT,
-            ThinQProperty.BATTERY_LEVEL,
-        ),
-    ),
-}
-
-
-async def set_sleep_timer_relative_hour_to_stop(
-    device: ConnectBaseDevice, value: int
-) -> None:
-    """Set a relative stop sleep timer with hour."""
-    if isinstance(
-        device, (AirConditionerDevice, AirPurifierFanDevice, HumidifierDevice)
-    ):
-        await device.set_sleep_timer_relative_time_to_stop(hour=value, minute=0)
-
-
-PROPERTY_OPTION_MAP = {
-    ThinQProperty.SLEEP_TIMER_RELATIVE_HOUR_TO_STOP: PropertyOption(
-        alt_setter=set_sleep_timer_relative_hour_to_stop
-    )
-}
-
-
 class HABridge:
     """A bridge interface that communicates with Home Assistant.
 
@@ -347,6 +147,9 @@ class HABridge:
 
         # The state map contains all states. The key is idx.
         self.state_map: dict[str, PropertyState] = {}
+
+        # A preferred units when retrieving temperature values.
+        self.preferred_temperature_unit: str = "C"
 
         self._setup_properties()
         self._setup_states()
@@ -380,24 +183,36 @@ class HABridge:
 
     def _setup_states(self) -> None:
         """Set up states of all properties."""
+        # Create single property states for all holders.
         for idx, holder in self.property_map.items():
             self.state_map[idx] = SinglePropertyState(holder)
 
-        self._setup_selective_states()
-        self._setup_climate_states()
-        self._setup_extended_states()
-        self._setup_timer_states()
+        # Create specified properties.
+        specifications = (
+            (SELECTIVE_STATE_MAP, self._create_selective_state),
+            (CLIMATE_STATE_MAP, self._create_climate_state),
+            (TEMPERATURE_STATE_MAP, self._create_temperature_state),
+            (TIMER_STATE_MAP, self._create_timer_states),
+            (EXTENDED_STATE_MAP, self._create_extended_state),
+            (WATER_HEATER_STATE_MAP, self._create_water_heater_state),
+        )
 
-    def _setup_selective_states(self) -> None:
-        """Set up optional states for selective property."""
-        for key, spec in SELECTIVE_STATE_MAP.items():
-            for location in self.locations:
-                if (
-                    selective_state := self._create_selective_state(spec, location)
-                ) is not None:
-                    # Note that selective state can overwrite single state.
-                    idx = self._add_idx(key, location)
-                    self.state_map[idx] = selective_state
+        for specification in specifications:
+            for key, spec in specification[0].items():
+                if not spec.is_target_device(self.device.device_type):
+                    continue
+
+                self._setup_specified_states(key, spec, specification[1])
+
+    def _setup_specified_states(
+        self, key: str, spec: PropertyStateSpec, create_func: Callable
+    ) -> None:
+        """Set up specified states."""
+        for location in self.locations:
+            if (state := create_func(spec, location)) is not None:
+                # Note that some type of state can overwrite single state.
+                idx = self._add_idx(key, location)
+                self.state_map[idx] = state
 
     def _create_selective_state(
         self, spec: SelectivePropertyStateSpec, location: str | None
@@ -410,16 +225,6 @@ class HABridge:
         ]
         return SelectivePropertyState(spec.origin_key, holders) if holders else None
 
-    def _setup_climate_states(self) -> None:
-        """Set up optional states for climate."""
-        for key, spec in CLIMATE_STATE_MAP.items():
-            for location in self.locations:
-                if (
-                    climate_state := self._create_climate_state(spec, location)
-                ) is not None:
-                    idx = self._add_idx(key, location)
-                    self.state_map[idx] = climate_state
-
     def _create_climate_state(
         self, spec: ClimatePropertyStateSpec, location: str | None
     ) -> ClimatePropertyState | None:
@@ -430,15 +235,18 @@ class HABridge:
         if power_holder is None or hvac_mode_holder is None:
             return None
 
-        temp_spec = spec.temperature_specs
-        temp_range_spec = spec.temperature_range_specs
+        # Build climate temperature map.
+        temperature_map: ClimateTemperatureMap = {}
+        for key, temp_spec in spec.temperature_specs.items():
+            if (
+                group := self._create_climate_temperature_group(temp_spec, location)
+            ) is not None:
+                temperature_map[key] = group
 
-        # Current temp and target temp are required.
-        current_temp_holder = self._get_holder(temp_spec.current_temp_key, location)
-        target_temp_holder = self._get_holder(temp_spec.target_temp_key, location)
-        if current_temp_holder is None or target_temp_holder is None:
+        if not temperature_map:
             return None
 
+        # Fan mode.
         fan_mode_holder: PropertyHolder | None = None
         for fan_mode_key in spec.fan_mode_keys:
             if (
@@ -449,46 +257,65 @@ class HABridge:
         return ClimatePropertyState(
             power_holder,
             hvac_mode_holder,
-            current_temp_holder,
-            target_temp_holder,
-            target_temp_low_holder=self._get_holder(
-                temp_spec.target_temp_low_key, location
+            temperature_map,
+            spec.default_temperature_preset,
+            support_temperature_range=spec.support_temperature_range,
+            temperature_preset_holder=self._get_holder(
+                spec.temperature_preset_key, location
             ),
-            target_temp_high_holder=self._get_holder(
-                temp_spec.target_temp_high_key, location
-            ),
-            unit_holder=self._get_holder(temp_spec.unit_key, location),
-            current_temp_range_holder=(
-                self._get_holder(temp_range_spec.current_temp_key, location)
-                if temp_range_spec is not None
-                else None
-            ),
-            target_temp_low_range_holder=(
-                self._get_holder(temp_range_spec.target_temp_low_key, location)
-                if temp_range_spec is not None
-                else None
-            ),
-            target_temp_high_range_holder=(
-                self._get_holder(temp_range_spec.target_temp_high_key, location)
-                if temp_range_spec is not None
-                else None
-            ),
-            unit_range_holder=(
-                self._get_holder(temp_range_spec.unit_key, location)
-                if temp_range_spec is not None
-                else None
+            temperature_sub_preset_holder=self._get_holder(
+                spec.temperature_sub_preset_key, location
             ),
             fan_mode_holder=fan_mode_holder,
             humidity_holder=self._get_holder(spec.humidity_key, location),
+            swing_mode_holder=self._get_holder(spec.swing_mode_key, location),
+            swing_horizontal_mode_holder=self._get_holder(
+                spec.swing_horizontal_mode_key, location
+            ),
+            use_preferred_unit=True,
         )
 
-    def _setup_extended_states(self) -> None:
-        """Set up optional states for vacuum."""
-        for key, spec in EXTENDED_STATE_MAP.items():
-            for location in self.locations:
-                if (state := self._create_extended_state(spec, location)) is not None:
-                    idx = self._add_idx(key, location)
-                    self.state_map[idx] = state
+    def _create_climate_temperature_group(
+        self,
+        spec: ClimateTemperatureSpec,
+        location: str | None,
+    ) -> ClimateTemperatureGroup | None:
+        """Create a climate temperature group."""
+
+        # Current temp is required.
+        if not (
+            current_temp_group := self._get_temperature_holder_group(
+                spec.current_temp_key, location
+            )
+        ):
+            return None
+
+        return ClimateTemperatureGroup(
+            current_temp_hvac_map={"_": current_temp_group},
+            target_temp_hvac_map={
+                hvac_mode: self._get_temperature_holder_group(key, location)
+                for hvac_mode, key in spec.target_temp_key_map.items()
+            },
+            target_temp_low_hvac_map={
+                hvac_mode: self._get_temperature_holder_group(
+                    key,
+                    location,
+                    min_key=spec.target_temp_low_min_key,
+                    max_key=spec.target_temp_low_max_key,
+                )
+                for hvac_mode, key in spec.target_temp_low_key_map.items()
+            },
+            target_temp_high_hvac_map={
+                hvac_mode: self._get_temperature_holder_group(
+                    key,
+                    location,
+                    min_key=spec.target_temp_high_min_key,
+                    max_key=spec.target_temp_high_max_key,
+                )
+                for hvac_mode, key in spec.target_temp_high_key_map.items()
+            },
+            unit_holder=self._get_holder(spec.unit_key, location),
+        )
 
     def _create_extended_state(
         self, spec: ExtendedPropertyStateSpec, location: str | None
@@ -542,30 +369,124 @@ class HABridge:
             power_holder=power_holder,
         )
 
-    def _setup_timer_states(self) -> None:
-        """Set up optional states for timer."""
-        for key, spec in TIMER_STATE_MAP.items():
-            for location in self.locations:
-                hour_holder = self._get_holder(spec.hour_key, location)
-                minute_holder = self._get_holder(spec.minute_key, location)
-                second_holder = self._get_holder(spec.second_key, location)
+    def _create_timer_states(
+        self, spec: TimerPropertyStateSpec, location: str | None
+    ) -> TimerPropertyState | None:
+        """Create timer state if possible."""
+        hour_holder = self._get_holder(spec.hour_key, location)
+        minute_holder = self._get_holder(spec.minute_key, location)
+        second_holder = self._get_holder(spec.second_key, location)
 
-                if minute_holder is not None:
-                    idx = self._add_idx(key, location)
-                    self.state_map[idx] = TimerPropertyState(
-                        hour_holder,
-                        minute_holder,
-                        second_holder,
-                        time_format=spec.time_format,
-                        setter=spec.setter,
-                    )
+        if minute_holder is not None:
+            return TimerPropertyState(
+                hour_holder,
+                minute_holder,
+                second_holder,
+                time_format=spec.time_format,
+                setter=spec.setter,
+            )
+
+        return None
+
+    def _create_temperature_state(
+        self, spec: TemperaturePropertyStateSpec, location: str | None
+    ) -> TemperaturePropertyState | None:
+        """Create temperature state if possible."""
+        if holder_map := self._get_temperature_holder_group(spec.origin_key, location):
+            return TemperaturePropertyState(
+                holder_map,
+                unit_holder=self._get_holder(spec.unit_key, location),
+                use_preferred_unit=spec.use_preferred_unit(self.device.device_type),
+            )
+
+        return None
+
+    def _create_water_heater_state(
+        self, spec: WaterHeaterPropertyStateSpec, location: str | None
+    ) -> WaterHeaterPropertyState | None:
+        """Create water_heater state if possible."""
+        power_holder: PropertyHolder | None
+        for power_key in spec.power_keys:
+            if (power_holder := self._get_holder(power_key, location)) is not None:
+                if power_key == spec.power_keys[-1]:
+                    break
+                if power_holder.profile.get(PROPERTY_WRITABLE):
+                    break
+        if power_holder is None:
+            return None
+
+        job_mode_holder = (
+            self._get_holder(spec.job_mode_key, location)
+            if spec.job_mode_key is not None
+            else None
+        )
+        current_temp_holder_map = self._get_temperature_holder_group(
+            key=spec.current_temp_key,
+            location=location,
+        )
+        target_temp_holder_map = self._get_temperature_holder_group(
+            key=spec.target_temp_key,
+            location=location,
+        )
+        unit_holder = self._get_holder(spec.unit_key, location)
+        return WaterHeaterPropertyState(
+            power_holder=power_holder,
+            job_mode_holder=job_mode_holder,
+            current_temp_holder_map=current_temp_holder_map,
+            target_temp_holder_map=target_temp_holder_map,
+            unit_holder=unit_holder,
+            use_preferred_unit=True,
+        )
 
     def _get_holder(
-        self, key: str | None, location: str | None = None
+        self, key: str | None, location: str | None = None, postfix: str | None = None
     ) -> PropertyHolder | None:
         """Return the property holder."""
+        if key is not None and postfix is not None:
+            key = f"{key}_{postfix}"
+
         if key and (idx := self._get_idx(key, location)) in self.property_map:
             return self.property_map[idx]
+
+        return None
+
+    def _get_temperature_holder_group(
+        self,
+        key: str,
+        location: str | None = None,
+        *,
+        min_key: str | None = None,
+        max_key: str | None = None,
+    ) -> TemperatureGroup:
+        """Return a group of temperature property holders."""
+        holder_group = {}
+        unit_postfix_pairs = {"C": "c", "F": "f", "_": None}
+        for unit, postfix in unit_postfix_pairs.items():
+            if (
+                holders := self._build_temperature_holders(
+                    key, location, postfix, min_key, max_key
+                )
+            ) is not None:
+                holder_group[unit] = holders
+
+        return holder_group
+
+    def _build_temperature_holders(
+        self,
+        key: str | None,
+        location: str | None,
+        postfix: str | None,
+        min_key: str | None,
+        max_key: str | None,
+    ) -> TemperatureHolders | None:
+        """Build a set of temperature holders."""
+        if (value_holder := self._get_holder(key, location, postfix)) is not None:
+            holders = {"value": value_holder}
+            if (min_holder := self._get_holder(min_key, location, postfix)) is not None:
+                holders["min"] = min_holder
+            if (max_holder := self._get_holder(max_key, location, postfix)) is not None:
+                holders["max"] = max_holder
+            return holders
 
         return None
 
@@ -622,7 +543,7 @@ class HABridge:
 
         # Update all states.
         for state in self.state_map.values():
-            state.update()
+            state.update(preferred_unit=self.preferred_temperature_unit)
 
         return self.state_map
 
@@ -635,7 +556,17 @@ class HABridge:
 
         # Update all states.
         for state in self.state_map.values():
-            state.update()
+            if isinstance(
+                state,
+                (
+                    ClimatePropertyState,
+                    TemperaturePropertyState,
+                    WaterHeaterPropertyState,
+                ),
+            ):
+                state.update(preferred_unit=self.preferred_temperature_unit)
+            else:
+                state.update()
 
         return self.state_map
 
@@ -648,6 +579,10 @@ class HABridge:
             return self.state_map
 
         return None
+
+    def set_preferred_temperature_unit(self, unit: str | None) -> None:
+        """Set preferred temperature unit."""
+        self.preferred_temperature_unit = unit if unit is not None else "C"
 
     async def post(self, idx: str, data: Any) -> None:
         """Post the data to API endpoint."""
@@ -668,8 +603,11 @@ class HABridge:
     async def async_set_target_temperature(self, idx: str, value: float) -> None:
         """Set target temperature."""
         if (
-            isinstance(state := self.state_map.get(idx), ClimatePropertyState)
-            and (holder := state.get_target_temp_holder()) is not None
+            isinstance(
+                state := self.state_map.get(idx),
+                (ClimatePropertyState, WaterHeaterPropertyState),
+            )
+            and (holder := state.get_target_temp_control_holder()) is not None
         ):
             return await holder.async_set(value)
 
@@ -715,6 +653,32 @@ class HABridge:
 
         raise ThinQAPIException("0001", "The control command is not supported.", {})
 
+    async def async_set_swing_mode(self, idx: str, value: str) -> None:
+        """Set swing mode."""
+        if (
+            isinstance(
+                state := self.state_map.get(idx),
+                (ClimatePropertyState,),
+            )
+            and state.swing_mode_holder is not None
+        ):
+            return await state.swing_mode_holder.async_set(value)
+
+        raise ThinQAPIException("0001", "The control command is not supported.", {})
+
+    async def async_set_swing_horizontal_mode(self, idx: str, value: str) -> None:
+        """Set swing hor mode."""
+        if (
+            isinstance(
+                state := self.state_map.get(idx),
+                (ClimatePropertyState,),
+            )
+            and state.swing_horizontal_mode_holder is not None
+        ):
+            return await state.swing_horizontal_mode_holder.async_set(value)
+
+        raise ThinQAPIException("0001", "The control command is not supported.", {})
+
     async def async_set_clean_operation_mode(self, idx: str, value: str) -> None:
         """Set clean operation mode."""
         if (
@@ -722,6 +686,16 @@ class HABridge:
             and state.clean_operation_mode_holder is not None
         ):
             return await state.clean_operation_mode_holder.async_set(value)
+
+        raise ThinQAPIException("0001", "The control command is not supported.", {})
+
+    async def async_set_job_mode(self, idx: str, value: str) -> None:
+        """Set job mode."""
+        if (
+            isinstance(state := self.state_map.get(idx), WaterHeaterPropertyState)
+            and state.job_mode_holder is not None
+        ):
+            return await state.job_mode_holder.async_set(value)
 
         raise ThinQAPIException("0001", "The control command is not supported.", {})
 

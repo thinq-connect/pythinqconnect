@@ -83,7 +83,7 @@ class ConnectDeviceProfile:
         }
 
     @staticmethod
-    def __get_readonly_enum_property(values: list[str]) -> dict:
+    def _get_readonly_enum_property(values: list[str]) -> dict:
         return {
             TYPE: "enum",
             READABILITY: True,
@@ -180,11 +180,11 @@ class ConnectDeviceProfile:
         return self._PROFILE
 
     def generate_error(self, errors: list[str] | None) -> None:
-        self._error = self.__get_readonly_enum_property(errors) if errors else None
+        self._error = self._get_readonly_enum_property(errors) if errors else None
 
     def generate_notification(self, notification: dict[str, Any] | None) -> None:
         notification_push = notification and notification.get("push")
-        self._notification = self.__get_readonly_enum_property(notification_push) if notification_push else None
+        self._notification = self._get_readonly_enum_property(notification_push) if notification_push else None
 
     def _get_prop_attr(self, key: Property | str) -> dict:
         return getattr(self, f"__{key}")
@@ -193,13 +193,20 @@ class ConnectDeviceProfile:
         setattr(self, f"__{key}", prop)
 
     def _set_resource_props(self, resource: Resource | str, props: dict | None) -> None:
+        if hasattr(self, resource):
+            old_props = getattr(self, resource)
+            if all([old_props, props]):
+                for mode in ["r", "w"]:
+                    props[mode] = old_props[mode] + props[mode]
+            elif old_props:
+                props = old_props
         setattr(self, resource, props)
 
     def _set_sub_profile(self, location_name: Location, sub_profile: ConnectDeviceProfile):
         setattr(self, location_name, sub_profile)
 
     def _set_properties(self, resource: Resource, value: list):
-        self._properties[resource.value] = value
+        self._properties[resource.value] = (self._properties.get(resource.value, [])) + value
 
     def _set_location_properties(self, location: Location, value: dict):
         self._location_properties[location.value] = value
@@ -247,6 +254,7 @@ class ConnectDeviceProfile:
                 writable_list = _writable or []
                 if readable_list or writable_list:
                     self._set_properties(self._RESOURCE_MAP[resource], list(set(readable_list + writable_list)))
+
                 self._set_resource_props(self._RESOURCE_MAP[resource], {"r": _readable, "w": _writable})
             else:
                 self._set_resource_props(self._RESOURCE_MAP[resource], None)
@@ -296,7 +304,7 @@ class ConnectDeviceProfile:
 
     def get_range_attribute_payload(self, attribute: Property, value: int) -> dict:
         if not self.check_range_attribute_writable(attribute, value):
-            raise ValueError(f"Not support {attribute}")
+            raise ValueError(f"Not support {attribute} : {value}")
         return self._get_attribute_payload(attribute, value)
 
     def get_enum_attribute_payload(self, attribute: Property, value: str) -> dict:
@@ -353,10 +361,9 @@ class ConnectBaseDevice(BaseDevice):
     def profiles(self) -> ConnectDeviceProfile:
         return self._profiles
 
-    def get_property_keys(self, resource: str, origin_keys: list[str]) -> list[str | None]:
+    def get_property_key(self, resource: str, origin_key: str) -> str | None:
         _resource_profile: dict[str, str] = self.profiles.get_profile().get(resource, {})
-
-        return [_resource_profile.get(origin_key, None) for origin_key in origin_keys]
+        return str(_prop_key) if (_prop_key := _resource_profile.get(origin_key, None)) else None
 
     def __return_exist_fun_name(self, fn_name: str) -> str | None:
         return fn_name if hasattr(self, fn_name) else None
@@ -374,7 +381,13 @@ class ConnectBaseDevice(BaseDevice):
         else:
             return None
 
-    def _set_custom_resources(self, attribute: str, resource_status: dict[str, str] | list[dict[str, str]]) -> bool:
+    def _set_custom_resources(
+        self,
+        prop_key: str,
+        attribute: str,
+        resource_status: dict[str, str] | list[dict[str, str]],
+        is_updated: bool = False,
+    ) -> bool:
         # pylint: disable=unused-argument
         # Need to be implemented by child classes
         return False
@@ -388,7 +401,7 @@ class ConnectBaseDevice(BaseDevice):
         value = None
         if resource_status is not None:
             if resource in self.profiles._CUSTOM_RESOURCES:
-                if self._set_custom_resources(prop_attr, resource_status):
+                if self._set_custom_resources(prop_key, prop_attr, resource_status, is_updated):
                     return
             if isinstance(resource_status, dict):
                 value = resource_status.get(prop_key)

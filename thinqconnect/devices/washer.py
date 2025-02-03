@@ -37,6 +37,7 @@ class WasherSubProfile(ConnectSubDeviceProfile):
                 "remoteControlEnable": Resource.REMOTE_CONTROL_ENABLE,
                 "timer": Resource.TIMER,
                 "detergent": Resource.DETERGENT,
+                "cycle": Resource.CYCLE,
             },
             profile_map={
                 "runState": {"currentState": Property.CURRENT_STATE},
@@ -55,6 +56,7 @@ class WasherSubProfile(ConnectSubDeviceProfile):
                     "relativeMinuteToStart": Property.RELATIVE_MINUTE_TO_START,
                 },
                 "detergent": {"detergentSetting": Property.DETERGENT_SETTING},
+                "cycle": {"cycleCount": Property.CYCLE_COUNT},
             },
             use_sub_notification=use_sub_notification,
         )
