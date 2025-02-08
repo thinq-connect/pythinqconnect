@@ -141,6 +141,8 @@ Refer to the table below for the appropriate country code to use:
 ### Simple Test
 ```py
 import asyncio
+from pprint import pprint
+
 from aiohttp import ClientSession
 from thinqconnect.thinq_api import ThinQApi
 
@@ -148,7 +150,7 @@ async def test_devices_list():
     async with ClientSession() as session:
         thinq_api = ThinQApi(session=session, access_token='your_personal_access_token', country_code='your_contry_code', client_id='your_client_id')
         response = await thinq_api.async_get_device_list()
-        print("device_list : %s", response.body)
+        pprint(response)
 
 asyncio.run(test_devices_list())
 ```
