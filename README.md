@@ -710,3 +710,30 @@ Empty
 |  1 | temperature | target\_temperature\_c |
 |  2 | temperature | target\_temperature\_f |
 |  3 | temperature | temperature\_unit      |
+
+
+### DEVICE\_VENTILATOR
+
+### Main
+
+|    | resources             | properties                               |
+|----|-----------------------|------------------------------------------|
+|  1 | ventilator\_job\_mode | current\_job\_mode                       |
+|  2 | operation             | ventilator\_operation\_mode              |
+|  3 | temperature           | current\_temperature                     |
+|  4 | temperature           | temperature\_unit                        |
+|  5 | air\_quality\_sensor  | pm1                                      |
+|  6 | air\_quality\_sensor  | pm2                                      |
+|  7 | air\_quality\_sensor  | pm10                                     |
+|  8 | air\_quality\_sensor  | co2                                      |
+|  9 | air\_flow             | wind\_strength                           |
+| 10 | timer                 | absolute\_hour\_to\_stop                 |
+| 11 | timer                 | absolute\_minute\_to\_stop               |
+| 12 | timer                 | absolute\_hour\_to\_start                |
+| 13 | timer                 | absolute\_minute\_to\_start              |
+| 14 | timer                 | relative\_hour\_to\_stop                 |
+| 15 | timer                 | relative\_minute\_to\_stop               |
+| 16 | timer                 | relative\_hour\_to\_start                |
+| 17 | timer                 | relative\_minute\_to\_start              |
+| 18 | sleep\_timer          | sleep\_timer\_relative\_hour\_to\_stop   |
+| 19 | sleep\_timer          | sleep\_timer\_relative\_minute\_to\_stop |

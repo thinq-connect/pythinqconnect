@@ -166,7 +166,7 @@ class TemperatureHelperBase(ABC):
 
         self.current_holder = holder
         self.value = value
-        self.unit = unit
+        self.unit = unit or preferred_unit
         self.min_value = min_value
         self.max_value = max_value
         return value
@@ -219,3 +219,13 @@ class ClimateTemperatureHelper(TemperatureHelperBase):
             self.hvac_temperature_map.get(hvac_mode),
             self._get_target_unit(preferred_unit),
         )
+
+    def get_holder(self, hvac_mode: str) -> PropertyHolder | None:
+        """Return the specified holder."""
+        unit = self.unit or "_"
+        if (holder_group := self.hvac_temperature_map.get(hvac_mode)) is not None and (
+            holders := holder_group.get(unit)
+        ) is not None:
+            return holders.get("value")
+
+        return None

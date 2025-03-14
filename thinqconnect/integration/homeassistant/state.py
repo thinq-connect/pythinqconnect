@@ -6,11 +6,10 @@
 # The property state interface for Home Assistant.
 
 from collections import deque
-from collections.abc import Awaitable, Callable, Iterable
+from typing import Any, Awaitable, Callable, Iterable
 from datetime import time
-from typing import Any
 
-from thinqconnect import ConnectBaseDevice, ThinQAPIException
+from thinqconnect import PROPERTY_WRITABLE, ConnectBaseDevice, ThinQAPIException
 from thinqconnect.devices.const import Property as ThinQProperty
 
 from .property import ActiveMode, PropertyHolder
@@ -518,7 +517,8 @@ class ClimatePropertyState(PropertyState):
         if self.hvac_mode == "heat":
             return self.get_target_temp_low_holder()
 
-        return None
+        # Fallback
+        return self.target_temp_high_helper.get_holder("cool")
 
     def get_target_temp_low_holder(self) -> PropertyHolder | None:
         """Return the current valid target temperature low holder."""
@@ -537,7 +537,14 @@ class ClimatePropertyState(PropertyState):
         if self.target_temp_high_helper.min is not None:
             candidates.append(self.target_temp_high_helper.min)
 
-        return min(candidates) if candidates else None
+        if candidates:
+            return min(candidates)
+
+        # Fallback
+        if (holder := self.target_temp_high_helper.get_holder("cool")) is not None:
+            return holder.min
+
+        return None
 
     @property
     def max(self) -> float | None:
@@ -548,18 +555,26 @@ class ClimatePropertyState(PropertyState):
         if self.target_temp_high_helper.max is not None:
             candidates.append(self.target_temp_high_helper.max)
 
-        return max(candidates) if candidates else None
+        if candidates:
+            return max(candidates)
+
+        # Fallback
+        if (holder := self.target_temp_high_helper.get_holder("cool")) is not None:
+            return holder.max
+
+        return None
 
     @property
     def step(self) -> float | None:
         """Return the step value."""
-        candidates: list[float] = []
-        if self.target_temp_low_helper.step is not None:
-            candidates.append(self.target_temp_low_helper.step)
-        if self.target_temp_high_helper.step is not None:
-            candidates.append(self.target_temp_high_helper.step)
+        if (holder := self.get_target_temp_control_holder()) is not None:
+            return holder.step
 
-        return max(candidates) if candidates else None
+        # Fallback
+        if (holder := self.target_temp_high_helper.get_holder("cool")) is not None:
+            return holder.max
+
+        return None
 
     @property
     def location(self) -> str | None:
@@ -836,3 +851,66 @@ class WaterHeaterPropertyState(PropertyState):
         if self.power_holder.key == ThinQProperty.HOT_WATER_MODE:
             value = "ON" if value == "POWER_ON" else "OFF"
         await self.power_holder.async_set(value)
+
+
+class DeviceState:
+    """A class that implements device state on runtime."""
+
+    def __init__(
+        self,
+        current_state_holder: PropertyHolder,
+        remote_control_enabled_holder: PropertyHolder,
+        operation_mode_holder: PropertyHolder | None = None,
+    ) -> None:
+        """Set up a state."""
+        self.current_state_holder = current_state_holder
+        self.operation_mode_holder = operation_mode_holder
+        self.remote_control_enabled_holder = remote_control_enabled_holder
+
+    @property
+    def state(self) -> str | None:
+        """Return the state."""
+        if self.current_state_holder is not None:
+            return self.current_state_holder.get_value()
+        return None
+
+    @property
+    def operation_mode(self) -> str | None:
+        """Return the operation mode."""
+        if self.operation_mode_holder is not None:
+            return self.operation_mode_holder.get_value()
+        return None
+
+    @property
+    def device_is_on(self) -> bool | None:
+        """Return the device is on."""
+        if (
+            self.operation_mode_holder is not None
+            and self.operation_mode_holder.get_value() is not None
+        ):
+            return self.operation_mode_holder.get_value_as_bool()
+        return self.state is not None and self.state != "power_off"
+
+    @property
+    def power_on_enabled(self) -> bool | None:
+        """Return the power on enabled."""
+        return (
+            self.operation_mode_holder is not None
+            and self.operation_mode_holder.options is not None
+            and "power_on" in self.operation_mode_holder.options
+        )
+
+    @property
+    def remote_control_enabled(self) -> bool | None:
+        """Return the remote control enabled."""
+        if self.remote_control_enabled_holder is not None:
+            return self.remote_control_enabled_holder.get_value_as_bool()
+        return None
+
+    def dump(self) -> str:
+        """Dump the device state."""
+        return (
+            f"DeviceState / state={self.state},"
+            f"op_mode={self.operation_mode}, remote={self.remote_control_enabled},"
+            f"device_is_on={self.device_is_on}, power_on_enabled={self.power_on_enabled}"
+        )

@@ -36,7 +36,9 @@ from thinqconnect import (
     StylerDevice,
     SystemBoilerDevice,
     ThinQApi,
+    ThinQAPIErrorCodes,
     ThinQAPIException,
+    VentilatorDevice,
     WashcomboMainDevice,
     WashcomboMiniDevice,
     WasherDevice,
@@ -52,6 +54,7 @@ from thinqconnect.devices.const import Location
 from .property import ActiveMode, PropertyHolder
 from .specification import (
     CLIMATE_STATE_MAP,
+    DEVICE_STATE_MAP,
     EXTENDED_STATE_MAP,
     PROPERTY_OPTION_MAP,
     SELECTIVE_STATE_MAP,
@@ -60,6 +63,7 @@ from .specification import (
     WATER_HEATER_STATE_MAP,
     ClimatePropertyStateSpec,
     ClimateTemperatureSpec,
+    DeviceStateSpec,
     ExtendedProperty,
     ExtendedPropertyStateSpec,
     PropertyStateSpec,
@@ -72,6 +76,7 @@ from .specification import (
 )
 from .state import (
     ClimatePropertyState,
+    DeviceState,
     ExtendedPropertyState,
     PropertyState,
     SelectivePropertyState,
@@ -108,6 +113,7 @@ DEVICE_TYPE_API_MAP: Final = {
     DeviceType.STICK_CLEANER: StickCleanerDevice,
     DeviceType.STYLER: StylerDevice,
     DeviceType.SYSTEM_BOILER: SystemBoilerDevice,
+    DeviceType.VENTILATOR: VentilatorDevice,
     DeviceType.WASHER: WasherDevice,
     DeviceType.WASHCOMBO_MAIN: WashcomboMainDevice,
     DeviceType.WASHCOMBO_MINI: WashcomboMiniDevice,
@@ -120,6 +126,10 @@ DEVICE_TYPE_API_MAP: Final = {
 }
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class NotConnectedDeviceError(ThinQAPIException):
+    """The class that represents an not connectd exception for LG ThinQ Connect API."""
 
 
 class HABridge:
@@ -150,6 +160,9 @@ class HABridge:
 
         # A preferred units when retrieving temperature values.
         self.preferred_temperature_unit: str = "C"
+
+        # The device state. The key is location.
+        self.device_state_map: dict[str, DeviceState | None] = {}
 
         self._setup_properties()
         self._setup_states()
@@ -204,6 +217,19 @@ class HABridge:
 
                 self._setup_specified_states(key, spec, specification[1])
 
+        # Create device state
+        device_spec = DEVICE_STATE_MAP.get(self.device.device_type)
+        if self.device.device_type == DeviceType.WASHTOWER and isinstance(
+            device_spec, dict
+        ):
+            device_spec = device_spec[self.sub_id]
+
+        if isinstance(device_spec, DeviceStateSpec):
+            for location in self.locations:
+                self.device_state_map[location if location is not None else "_"] = (
+                    self._create_device_state(device_spec, location)
+                )
+
     def _setup_specified_states(
         self, key: str, spec: PropertyStateSpec, create_func: Callable
     ) -> None:
@@ -213,6 +239,24 @@ class HABridge:
                 # Note that some type of state can overwrite single state.
                 idx = self._add_idx(key, location)
                 self.state_map[idx] = state
+
+    def _create_device_state(
+        self, spec: DeviceStateSpec, location: str | None
+    ) -> DeviceState | None:
+        if (
+            current_state_holder := self._get_holder(spec.current_state_key, location)
+        ) is None or (
+            remote_control_enabled_holder := self._get_holder(
+                spec.remote_control_enabled_key, location
+            )
+        ) is None:
+            return None
+
+        return DeviceState(
+            current_state_holder,
+            remote_control_enabled_holder,
+            self._get_holder(spec.operation_mode_key, location),
+        )
 
     def _create_selective_state(
         self, spec: SelectivePropertyStateSpec, location: str | None
@@ -506,6 +550,10 @@ class HABridge:
         self.idx_map[key].append(idx)
         return idx
 
+    def get_device_state(self, location: str | None) -> DeviceState | None:
+        """Return the device state."""
+        return self.device_state_map.get(location if location is not None else "_")
+
     def get_location_for_idx(self, idx: str) -> str | None:
         """Return the location for idx."""
         if (holder := self.property_map.get(idx)) is not None:
@@ -517,7 +565,10 @@ class HABridge:
         return None
 
     def get_active_idx(
-        self, key: str, active_mode: ActiveMode | None = None
+        self,
+        key: str,
+        active_mode: ActiveMode | None = None,
+        condition: Callable[[PropertyState], bool] = lambda state: True,
     ) -> list[str]:
         """Return active list of idx for the given key."""
         idx_list = self.idx_map.get(key, [])
@@ -528,17 +579,37 @@ class HABridge:
         return [
             idx
             for idx in idx_list
-            if (state := self.state_map.get(idx)) is not None
-            and state.can_activate(active_mode)
+            if self.get_active_state(idx, active_mode, condition)
         ]
+
+    def get_active_state(
+        self,
+        idx: str,
+        active_mode: ActiveMode | None = None,
+        condition: Callable[[PropertyState], bool] = lambda state: True,
+    ) -> PropertyState | None:
+        """Return the active state."""
+        if (
+            (state := self.state_map.get(idx)) is not None
+            and state.can_activate(active_mode)
+            and condition(state)
+        ):
+            return state
+
+        return None
 
     async def fetch_data(self) -> dict[str, PropertyState]:
         """Fetch data from API endpoint."""
-        if (
-            response := await self.device.thinq_api.async_get_device_status(
+        try:
+            response = await self.device.thinq_api.async_get_device_status(
                 self.device.device_id
             )
-        ) is not None:
+        except ThinQAPIException as e:
+            if e.code == ThinQAPIErrorCodes.NOT_CONNECTED_DEVICE:
+                raise NotConnectedDeviceError(e.code, e.message, e.headers) from e
+            else:
+                raise
+        if response is not None:
             self.device.set_status(response)
 
         # Update all states.
@@ -630,6 +701,23 @@ class HABridge:
             and (holder := state.get_target_temp_high_holder()) is not None
         ):
             return await holder.async_set(value)
+        raise ThinQAPIException("0001", "The control command is not supported.", {})
+
+    async def async_set_target_temperature_low_high(
+        self, idx: str, low: float, high: float
+    ) -> None:
+        """Set cool and heat target temperature in range mode."""
+        if isinstance(
+            state := self.state_map.get(idx), ClimatePropertyState
+        ) and isinstance(self.device, AirConditionerDevice):
+            if state.unit == "F":
+                return await self.device.set_two_set_heat_cool_target_temperature_f(
+                    low, high
+                )
+
+            return await self.device.set_two_set_heat_cool_target_temperature_c(
+                low, high
+            )
 
         raise ThinQAPIException("0001", "The control command is not supported.", {})
 

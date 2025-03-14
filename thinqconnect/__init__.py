@@ -26,6 +26,7 @@ from .devices.robot_cleaner import RobotCleanerDevice
 from .devices.stick_cleaner import StickCleanerDevice
 from .devices.styler import StylerDevice
 from .devices.system_boiler import SystemBoilerDevice
+from .devices.ventilator import VentilatorDevice
 from .devices.washcombo_main import WashcomboMainDevice
 from .devices.washcombo_mini import WashcomboMiniDevice
 from .devices.washer import WasherDevice
@@ -78,4 +79,5 @@ __all__ = [
     "PROPERTY_WRITABLE",
     "ConnectBaseDevice",
     "ThinQMQTTClient",
+    "VentilatorDevice",
 ]

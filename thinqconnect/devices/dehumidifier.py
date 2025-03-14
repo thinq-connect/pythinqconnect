@@ -58,5 +58,8 @@ class DehumidifierDevice(ConnectBaseDevice):
     async def set_dehumidifier_operation_mode(self, mode: str) -> dict | None:
         return await self.do_enum_attribute_command(Property.DEHUMIDIFIER_OPERATION_MODE, mode)
 
+    async def set_current_job_mode(self, job_mode: str) -> dict | None:
+        return await self.do_enum_attribute_command(Property.CURRENT_JOB_MODE, job_mode)
+
     async def set_wind_strength(self, wind_strength: str) -> dict | None:
         return await self.do_enum_attribute_command(Property.WIND_STRENGTH, wind_strength)

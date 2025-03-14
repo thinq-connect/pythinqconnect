@@ -53,6 +53,7 @@ class Resource(StrEnum):
     WATER_HEATER_JOB_MODE = auto()
     WATER_INFO = auto()
     WIND_DIRECTION = auto()
+    VENTILATOR_JOB_MODE = auto()
 
 
 class Property(StrEnum):
@@ -73,6 +74,7 @@ class Property(StrEnum):
     CEILING_FAN_OPERATION_MODE = auto()
     CLEAN_LIGHT_REMINDER = auto()
     CLEAN_OPERATION_MODE = auto()
+    CO2 = auto()
     COCK_STATE = auto()
     COOK_MODE = auto()
     COOL_MAX_TEMPERATURE = auto()
@@ -266,6 +268,7 @@ class Property(StrEnum):
     WIND_TEMPERATURE = auto()
     WIND_VOLUME = auto()
     WORT_INFO = auto()
+    VENTILATOR_OPERATION_MODE = auto()
     YEAST_INFO = auto()
 
 

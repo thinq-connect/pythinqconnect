@@ -303,13 +303,17 @@ class AirConditionerDevice(ConnectBaseDevice):
     async def set_cool_target_temperature_f(self, temperature: int) -> dict | None:
         return await self._set_cool_target_temperature(temperature, "F")
 
-    async def _set_two_set_heat_target_temperature(self, temperature: int, unit: str) -> dict | None:
+    def __get_temperature_properties(self, unit: str) -> tuple[str, str]:
         heat_target_prop = (
             Property.TWO_SET_HEAT_TARGET_TEMPERATURE_C if unit == "C" else Property.TWO_SET_HEAT_TARGET_TEMPERATURE_F
         )
         cool_target_prop = (
             Property.TWO_SET_COOL_TARGET_TEMPERATURE_C if unit == "C" else Property.TWO_SET_COOL_TARGET_TEMPERATURE_F
         )
+        return heat_target_prop, cool_target_prop
+
+    async def _set_two_set_heat_target_temperature(self, temperature: int, unit: str) -> dict | None:
+        heat_target_prop, cool_target_prop = self.__get_temperature_properties(unit)
         return await self.do_multi_attribute_command(
             {
                 heat_target_prop: temperature,
@@ -319,16 +323,23 @@ class AirConditionerDevice(ConnectBaseDevice):
         )
 
     async def _set_two_set_cool_target_temperature(self, temperature: int, unit: str) -> dict | None:
-        heat_target_prop = (
-            Property.TWO_SET_HEAT_TARGET_TEMPERATURE_C if unit == "C" else Property.TWO_SET_HEAT_TARGET_TEMPERATURE_F
-        )
-        cool_target_prop = (
-            Property.TWO_SET_COOL_TARGET_TEMPERATURE_C if unit == "C" else Property.TWO_SET_COOL_TARGET_TEMPERATURE_F
-        )
+        heat_target_prop, cool_target_prop = self.__get_temperature_properties(unit)
         return await self.do_multi_attribute_command(
             {
                 heat_target_prop: self.get_status(heat_target_prop),
                 cool_target_prop: temperature,
+                Property.TWO_SET_TEMPERATURE_UNIT: unit,
+            }
+        )
+
+    async def _set_two_set_heat_cool_target_temperature(
+        self, heat_temperature: int, cool_temperature: int, unit: str
+    ) -> dict | None:
+        heat_target_prop, cool_target_prop = self.__get_temperature_properties(unit)
+        return await self.do_multi_attribute_command(
+            {
+                heat_target_prop: heat_temperature,
+                cool_target_prop: cool_temperature,
                 Property.TWO_SET_TEMPERATURE_UNIT: unit,
             }
         )
@@ -344,6 +355,16 @@ class AirConditionerDevice(ConnectBaseDevice):
 
     async def set_two_set_cool_target_temperature_f(self, temperature: int) -> dict | None:
         return await self._set_two_set_cool_target_temperature(temperature, "F")
+
+    async def set_two_set_heat_cool_target_temperature_c(
+        self, heat_temperature: int, cool_temperature: int
+    ) -> dict | None:
+        return await self._set_two_set_heat_cool_target_temperature(heat_temperature, cool_temperature, "C")
+
+    async def set_two_set_heat_cool_target_temperature_f(
+        self, heat_temperature: int, cool_temperature: int
+    ) -> dict | None:
+        return await self._set_two_set_heat_cool_target_temperature(heat_temperature, cool_temperature, "F")
 
     async def set_relative_time_to_start(self, hour: int, minute: int) -> dict | None:
         return await self.do_multi_attribute_command(

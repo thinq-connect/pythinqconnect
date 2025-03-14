@@ -6,10 +6,10 @@
 # Specifications for entity setup.
 
 from abc import ABC
-from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import time
 from enum import StrEnum, auto
+from typing import Awaitable, Callable
 
 from thinqconnect import (
     AirConditionerDevice,
@@ -20,6 +20,7 @@ from thinqconnect import (
     HumidifierDevice,
     RobotCleanerDevice,
 )
+from thinqconnect.devices.const import Location
 from thinqconnect.devices.const import Property as ThinQProperty
 
 from .property import PropertyOption
@@ -485,4 +486,53 @@ PROPERTY_OPTION_MAP = {
     ThinQProperty.SLEEP_TIMER_RELATIVE_HOUR_TO_STOP: PropertyOption(
         alt_setter=set_sleep_timer_relative_hour_to_stop
     )
+}
+
+
+@dataclass(kw_only=True, frozen=True)
+class DeviceStateSpec:
+    """A specification to create device property state."""
+
+    current_state_key: str = ThinQProperty.CURRENT_STATE
+    remote_control_enabled_key: str = ThinQProperty.REMOTE_CONTROL_ENABLED
+    operation_mode_key: str | None
+
+
+DEVICE_STATE_MAP = {
+    DeviceType.COOKTOP: DeviceStateSpec(operation_mode_key=None),
+    DeviceType.DISH_WASHER: DeviceStateSpec(
+        operation_mode_key=ThinQProperty.DISH_WASHER_OPERATION_MODE,
+    ),
+    DeviceType.DRYER: DeviceStateSpec(
+        operation_mode_key=ThinQProperty.DRYER_OPERATION_MODE,
+    ),
+    DeviceType.OVEN: DeviceStateSpec(
+        operation_mode_key=ThinQProperty.OVEN_OPERATION_MODE,
+    ),
+    DeviceType.STYLER: DeviceStateSpec(
+        operation_mode_key=ThinQProperty.STYLER_OPERATION_MODE,
+    ),
+    DeviceType.WASHCOMBO_MAIN: DeviceStateSpec(
+        operation_mode_key=ThinQProperty.WASHER_OPERATION_MODE,
+    ),
+    DeviceType.WASHCOMBO_MINI: DeviceStateSpec(
+        operation_mode_key=ThinQProperty.WASHER_OPERATION_MODE,
+    ),
+    DeviceType.WASHER: DeviceStateSpec(
+        operation_mode_key=ThinQProperty.WASHER_OPERATION_MODE,
+    ),
+    DeviceType.WASHTOWER: {
+        Location.DRYER: DeviceStateSpec(
+            operation_mode_key=ThinQProperty.DRYER_OPERATION_MODE,
+        ),
+        Location.WASHER: DeviceStateSpec(
+            operation_mode_key=ThinQProperty.WASHER_OPERATION_MODE,
+        ),
+    },
+    DeviceType.WASHTOWER_DRYER: DeviceStateSpec(
+        operation_mode_key=ThinQProperty.DRYER_OPERATION_MODE,
+    ),
+    DeviceType.WASHTOWER_WASHER: DeviceStateSpec(
+        operation_mode_key=ThinQProperty.WASHER_OPERATION_MODE,
+    ),
 }

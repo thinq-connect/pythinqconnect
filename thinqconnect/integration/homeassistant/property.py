@@ -8,10 +8,9 @@
 from __future__ import annotations
 
 import inspect
-from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any
+from typing import Any, Awaitable, Callable
 
 from thinqconnect import (
     PROPERTY_READABLE,
@@ -231,11 +230,12 @@ class PropertyHolder:
             return False
 
         if isinstance(value, str):
-            return (
-                value.lower() == "power_on"
-                or value.lower() == "true"
-                or value.lower() == "on"
-            )
+            if value.lower() in ["power_off", "false", "off"]:
+                return False
+            elif value.lower() in ["power_on", "true", "on"]:
+                return True
+            else:
+                return False
 
         return bool(value)
 
