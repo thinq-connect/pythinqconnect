@@ -24,7 +24,10 @@ class DehumidifierProfile(ConnectDeviceProfile):
             profile_map={
                 "operation": {"dehumidifierOperationMode": Property.DEHUMIDIFIER_OPERATION_MODE},
                 "dehumidifierJobMode": {"currentJobMode": Property.CURRENT_JOB_MODE},
-                "humidity": {"currentHumidity": Property.CURRENT_HUMIDITY},
+                "humidity": {
+                    "currentHumidity": Property.CURRENT_HUMIDITY,
+                    "targetHumidity": Property.TARGET_HUMIDITY,
+                },
                 "airFlow": {
                     "windStrength": Property.WIND_STRENGTH,
                     "windStrengthLevel": Property.WIND_STRENGTH_LEVEL,
