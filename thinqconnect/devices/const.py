@@ -274,6 +274,7 @@ class Property(StrEnum):
     WIND_ROTATE_UP_DOWN = auto()
     WIND_STEP = auto()
     WIND_STRENGTH = auto()
+    WIND_STRENGTH_LEVEL = auto()
     WIND_TEMPERATURE = auto()
     WIND_VOLUME = auto()
     WORT_INFO = auto()

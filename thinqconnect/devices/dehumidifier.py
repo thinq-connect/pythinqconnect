@@ -25,7 +25,10 @@ class DehumidifierProfile(ConnectDeviceProfile):
                 "operation": {"dehumidifierOperationMode": Property.DEHUMIDIFIER_OPERATION_MODE},
                 "dehumidifierJobMode": {"currentJobMode": Property.CURRENT_JOB_MODE},
                 "humidity": {"currentHumidity": Property.CURRENT_HUMIDITY},
-                "airFlow": {"windStrength": Property.WIND_STRENGTH},
+                "airFlow": {
+                    "windStrength": Property.WIND_STRENGTH,
+                    "windStrengthLevel": Property.WIND_STRENGTH_LEVEL,
+                },
             },
         )
 
@@ -63,3 +66,6 @@ class DehumidifierDevice(ConnectBaseDevice):
 
     async def set_wind_strength(self, wind_strength: str) -> dict | None:
         return await self.do_enum_attribute_command(Property.WIND_STRENGTH, wind_strength)
+
+    async def set_wind_strength_level(self, wind_strength_level: str) -> dict | None:
+        return await self.do_enum_attribute_command(Property.WIND_STRENGTH_LEVEL, wind_strength_level)
