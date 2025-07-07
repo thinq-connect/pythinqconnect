@@ -320,7 +320,9 @@ For detailed information on Device Properties, please refer to the following pag
 |  1 | operation               | dehumidifier\_operation\_mode |
 |  2 | dehumidifier\_job\_mode | current\_job\_mode            |
 |  3 | humidity                | current\_humidity             |
-|  4 | air\_flow               | wind\_strength                |
+|  4 | humidity                | target\_humidity              |
+|  5 | air\_flow               | wind\_strength                |
+|  6 | air\_flow               | wind\_strength\_level         |
 
 
 ### DEVICE\_DISH\_WASHER
