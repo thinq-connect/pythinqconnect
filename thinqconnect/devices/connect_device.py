@@ -420,6 +420,11 @@ class ConnectBaseDevice(BaseDevice):
             if is_updated:
                 if prop_key in resource_status:
                     self._set_status_attr(prop_attr, value)
+                elif resource == "timer":
+                    # LG devices omit timer fields (e.g. remainHour) when their value
+                    # is 0 instead of sending an explicit 0. Clear the cached value so
+                    # it does not persist across incremental MQTT updates.
+                    self._set_status_attr(prop_attr, None)
                 return
 
         self._set_status_attr(prop_attr, value)
