@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.0.12 (2026-04-22)
+### Integration
+* Home Assistant compatibility patch (kimchi_refrigerator)
+
 ## 1.0.11 (2026-03-27)
 ### Features
 * Add **particulate matter level** properties (air_purifier)

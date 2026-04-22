@@ -17,6 +17,7 @@ from thinqconnect import (
     PROPERTY_READABLE,
     PROPERTY_WRITABLE,
     ConnectBaseDevice,
+    DeviceType,
 )
 from thinqconnect.devices.const import Location
 from thinqconnect.devices.const import Property as ThinQProperty
@@ -74,6 +75,14 @@ class PropertyHolder:
     def options(self) -> list[str] | None:
         """Retrieve a list of options from the given profile."""
         data = self._get_profile_data()
+
+        if (
+            self.api.device_type == DeviceType.KIMCHI_REFRIGERATOR
+            and self.key == ThinQProperty.TARGET_TEMPERATURE
+            and "TEMPERATURE_NUMBER" in data
+        ):
+            # When it is TEMPERATURE_NUMBER, the options property returns None.
+            return None
 
         if self.data_type == "enum" and isinstance(data, list):
             return [item.lower() if isinstance(item, str) else item for item in data]
@@ -183,7 +192,12 @@ class PropertyHolder:
         if status is None:
             return None
 
-        if type(status) in (int, float):
+        if (
+            self.api.device_type == DeviceType.KIMCHI_REFRIGERATOR
+            and self.key == ThinQProperty.TARGET_TEMPERATURE
+            and "TEMPERATURE_NUMBER" in self._get_profile_data()
+        ):
+            # When it is TEMPERATURE_NUMBER, the value returns it's own numeric type not str.
             return status
 
         if self.data_type in ["enum", "boolean"]:

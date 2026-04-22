@@ -71,6 +71,7 @@ from .specification import (
     PropertyStateSpec,
     SelectivePropertyStateSpec,
     TemperaturePropertyStateSpec,
+    ThinQProperty,
     ThinQPropertyEx,
     TimerProperty,
     TimerPropertyStateSpec,
@@ -229,7 +230,12 @@ class HABridge:
             for key, spec in specification[0].items():
                 if not spec.is_target_device(self.device.device_type):
                     continue
-
+                if (
+                    self.device.device_type == DeviceType.KIMCHI_REFRIGERATOR
+                    and key == ThinQProperty.TARGET_TEMPERATURE
+                ):
+                    # For kimchi refrigerator, target temperature does not follow the temperature spec.
+                    continue
                 self._setup_specified_states(key, spec, specification[1])
 
         # Create device state
