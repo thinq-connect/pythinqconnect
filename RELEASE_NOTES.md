@@ -1,5 +1,14 @@
 # Release Notes
 
+## 1.0.13 (2026-06-19)
+### Features
+* Add **wind direction** property options (air_conditioner): [#19](https://github.com/thinq-connect/pythinqconnect/issues/19)
+### Improvements
+* Improve error code definitions for better reliability: [#35](https://github.com/thinq-connect/pythinqconnect/issues/35)
+### Fixes
+* Fix date validation logic for energy usage queries: [#33](https://github.com/thinq-connect/pythinqconnect/pull/33)
+* Fix MQTT connection stability issue: [#32](https://github.com/thinq-connect/pythinqconnect/pull/32)
+
 ## 1.0.12 (2026-04-22)
 ### Integration
 * Home Assistant compatibility patch (kimchi_refrigerator)

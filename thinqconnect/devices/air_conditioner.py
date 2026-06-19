@@ -106,8 +106,16 @@ class AirConditionerProfile(ConnectDeviceProfile):
                 },
                 "display": {"light": Property.DISPLAY_LIGHT},
                 "windDirection": {
+                    "airGuideWind": Property.WIND_AIR_GUIDE,
+                    "autoFitWind": Property.WIND_AUTO_FIT,
+                    "concentrationWind": Property.WIND_CONCENTRATION,
+                    "forestWind": Property.WIND_FOREST,
+                    "highCeilingWind": Property.WIND_HIGH_CEILING,
+                    "longPowerWind": Property.WIND_LONG_POWER,
+                    "mannerWind": Property.WIND_MANNER,
                     "rotateUpDown": Property.WIND_ROTATE_UP_DOWN,
                     "rotateLeftRight": Property.WIND_ROTATE_LEFT_RIGHT,
+                    "swirlWind": Property.WIND_SWIRL,
                 },
             },
             custom_resources=["twoSetTemperature", "temperatureInUnits", "twoSetTemperatureInUnits"],
@@ -440,3 +448,27 @@ class AirConditionerDevice(ConnectBaseDevice):
 
     async def set_wind_rotate_left_right(self, wind_rotate_left_right: bool) -> dict | None:
         return await self.do_attribute_command(Property.WIND_ROTATE_LEFT_RIGHT, wind_rotate_left_right)
+
+    async def set_wind_forest(self, wind_forest: bool) -> dict | None:
+        return await self.do_attribute_command(Property.WIND_FOREST, wind_forest)
+
+    async def set_wind_air_guide(self, wind_air_guide: bool) -> dict | None:
+        return await self.do_attribute_command(Property.WIND_AIR_GUIDE, wind_air_guide)
+
+    async def set_wind_high_ceiling(self, wind_high_ceiling: bool) -> dict | None:
+        return await self.do_attribute_command(Property.WIND_HIGH_CEILING, wind_high_ceiling)
+
+    async def set_wind_auto_fit(self, wind_auto_fit: bool) -> dict | None:
+        return await self.do_attribute_command(Property.WIND_AUTO_FIT, wind_auto_fit)
+
+    async def set_wind_concentration(self, wind_concentration: bool) -> dict | None:
+        return await self.do_attribute_command(Property.WIND_CONCENTRATION, wind_concentration)
+
+    async def set_wind_swirl(self, wind_swirl: bool) -> dict | None:
+        return await self.do_attribute_command(Property.WIND_SWIRL, wind_swirl)
+
+    async def set_wind_manner(self, wind_manner: bool) -> dict | None:
+        return await self.do_attribute_command(Property.WIND_MANNER, wind_manner)
+
+    async def set_wind_long_power(self, wind_long_power: bool) -> dict | None:
+        return await self.do_attribute_command(Property.WIND_LONG_POWER, wind_long_power)

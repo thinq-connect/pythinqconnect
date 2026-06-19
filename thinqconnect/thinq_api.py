@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import logging
 import uuid
+from enum import Enum
 from typing import Any
 
 from aiohttp import ClientResponse, ClientSession
@@ -21,7 +22,7 @@ from .country import get_region_from_country
 _LOGGER = logging.getLogger(__name__)
 
 
-class ThinQAPIErrorCodes:
+class ThinQAPIErrorCodes(str, Enum):
     """The class that represents the error codes for LG ThinQ Connect API."""
 
     UNKNOWN_ERROR = "0000"
@@ -34,7 +35,7 @@ class ThinQAPIErrorCodes:
     NOT_REGISTERED_USER = "1202"
     NOT_REGISTERED_SERVICE = "1203"
     NOT_SUBSCRIBED_EVENT = "1204"
-    NOT_REGISTERED_DEVICE = "1205"
+    NOT_EXIST_DEVICE = "1205"
     NOT_SUBSCRIBED_PUSH = "1206"
     ALREADY_SUBSCRIBED_PUSH = "1207"
     NOT_REGISTERED_SERVICE_BY_ADMIN = "1208"
@@ -86,7 +87,7 @@ class ThinQAPIErrorCodes:
     COMMAND_NOT_SUPPORTED_IN_MODE = "2305"
 
 
-error_code_mapping = {value: name for name, value in vars(ThinQAPIErrorCodes).items()}
+error_code_mapping = {member.value: member.name for member in ThinQAPIErrorCodes}
 
 
 class ThinQAPIException(Exception):

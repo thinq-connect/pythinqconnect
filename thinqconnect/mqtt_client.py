@@ -150,11 +150,12 @@ class ThinQMQTTClient:
     async def generate_csr(self) -> bool:
         """Create CSR."""
         cert_data = await self._get_root_certificate()
-        self.bytes_root_ca = cert_data.encode("utf-8")
 
         if cert_data is None:
             _LOGGER.error("Root certification download failed")
             return False
+
+        self.bytes_root_ca = cert_data.encode("utf-8")
 
         key = crypto.PKey()
         key.generate_key(crypto.TYPE_RSA, PRIVATE_KEY_SIZE)
@@ -262,11 +263,10 @@ class ThinQMQTTClient:
                 "Connect with session_present : %s",
                 connect_result["session_present"],
             )
-            self._state == ClientConnectionState.CLIENT_CONNECTED
+            self._state = ClientConnectionState.CLIENT_CONNECTED
         except Exception as err:
             _LOGGER.error("Failed to connect endpoint: %s", err)
             return None
-        self._state = ClientConnectionState.CLIENT_CONNECTED
         self._mqtt_connection = mqtt_connection
         if self._mqtt_connection is not None:
             try:
