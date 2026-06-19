@@ -195,8 +195,16 @@ For detailed information on Device Properties, please refer to the following pag
 | 48 | filter\_info          | filter\_lifetime                         |
 | 49 | filter\_info          | filter\_remain\_percent                  |
 | 50 | display               | display\_light                           |
-| 51 | wind\_direction       | wind\_rotate\_up\_down                   |
-| 52 | wind\_direction       | wind\_rotate\_left\_right                |
+| 51 | wind\_direction       | wind\_air\_guide                         |
+| 52 | wind\_direction       | wind\_auto\_fit                          |
+| 53 | wind\_direction       | wind\_concentration                      |
+| 54 | wind\_direction       | wind\_forest                             |
+| 55 | wind\_direction       | wind\_high\_ceiling                      |
+| 56 | wind\_direction       | wind\_long\_power                        |
+| 57 | wind\_direction       | wind\_manner                             |
+| 58 | wind\_direction       | wind\_rotate\_up\_down                   |
+| 59 | wind\_direction       | wind\_rotate\_left\_right                |
+| 60 | wind\_direction       | wind\_swirl                              |
 
 
 ### DEVICE\_AIR\_PURIFIER

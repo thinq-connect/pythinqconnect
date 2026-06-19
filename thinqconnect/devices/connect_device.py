@@ -507,7 +507,7 @@ class ConnectBaseDevice(BaseDevice):
             return None, None
 
         year = int(date_str[:4])
-        month = int(date_str[5:6])
+        month = int(date_str[4:6])
         day = int(date_str[6:]) if date_type == USAGE_DAILY else 1
 
         try:

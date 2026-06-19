@@ -170,8 +170,25 @@ class HABridge:
         # Oven's mixed control. operation_mode, cook_mode, target_temperature
         self._mixed_control: dict = {}
 
+        # Throttle state.async_set(data) calls across this HABridge.
+        self._state_set_throttle_sec = 3.0
+        self._state_set_last_called: float | None = None
+        self._state_set_lock = asyncio.Lock()
+
         self._setup_properties()
         self._setup_states()
+
+    async def _async_throttle_state_set(self) -> None:
+        """Throttle consecutive state set calls for this HABridge."""
+        async with self._state_set_lock:
+            now = asyncio.get_running_loop().time()
+            last_called = self._state_set_last_called
+            if last_called is not None:
+                wait_time = self._state_set_throttle_sec - (now - last_called)
+                if wait_time > 0:
+                    await asyncio.sleep(wait_time)
+
+            self._state_set_last_called = asyncio.get_running_loop().time()
 
     def _setup_properties(self) -> None:
         """Set up all properties in the device. Create idx map and property map."""
@@ -690,6 +707,7 @@ class HABridge:
     async def post(self, idx: str, data: Any) -> None:
         """Post the data to API endpoint."""
         if state := self.state_map.get(idx):
+            await self._async_throttle_state_set()
             await state.async_set(data)
             return
 

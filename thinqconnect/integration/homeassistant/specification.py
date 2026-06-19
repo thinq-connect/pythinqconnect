@@ -201,7 +201,7 @@ CLIMATE_STATE_MAP = {
             ),
         },
         support_temperature_range_key=ThinQProperty.TWO_SET_ENABLED,
-        fan_mode_keys=(ThinQProperty.WIND_STEP, ThinQProperty.WIND_STRENGTH),
+        fan_mode_keys=(ThinQProperty.WIND_STRENGTH,),
         humidity_key=ThinQProperty.HUMIDITY,
         swing_mode_key=ThinQProperty.WIND_ROTATE_UP_DOWN,
         swing_horizontal_mode_key=ThinQProperty.WIND_ROTATE_LEFT_RIGHT,
