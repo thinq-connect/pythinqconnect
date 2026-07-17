@@ -24,7 +24,7 @@ setup(
     python_requires=">=3.10",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=["aiohttp>=3.14.0", "awsiotsdk", "pyOpenSSL"],
+    install_requires=["aiohttp>=3.14.0", "awsiotsdk", "cryptography"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
