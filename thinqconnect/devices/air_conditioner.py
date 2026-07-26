@@ -404,6 +404,12 @@ class AirConditionerDevice(ConnectBaseDevice):
             }
         )
 
+    async def set_relative_hour_to_start(self, hour: int) -> dict | None:
+        return await self.set_relative_time_to_start(hour=hour, minute=0)
+
+    async def set_relative_hour_to_stop(self, hour: int) -> dict | None:
+        return await self.set_relative_time_to_stop(hour=hour, minute=0)
+
     async def set_absolute_time_to_start(self, hour: int, minute: int) -> dict | None:
         return await self.do_multi_attribute_command(
             {
