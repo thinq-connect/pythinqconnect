@@ -282,5 +282,6 @@ class ThinQMQTTClient:
 
     async def async_disconnect(self) -> None:
         """Unregister client and disconnects handlers"""
-        self._mqtt_connection.unsubscribe(topic=self.topic_subscription)
+        if self._mqtt_connection is not None:
+            self._mqtt_connection.unsubscribe(topic=self.topic_subscription)
         await self._on_disconnect()
