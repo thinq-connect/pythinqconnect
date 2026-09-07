@@ -83,6 +83,7 @@ from .state import (
     ExtendedPropertyState,
     PropertyState,
     SelectivePropertyState,
+    OvenTimerPropertyState,
     SinglePropertyState,
     TemperaturePropertyState,
     TimerPropertyState,
@@ -471,6 +472,20 @@ class HABridge:
         second_holder = self._get_holder(spec.second_key, location)
 
         if minute_holder is not None:
+            if (
+                self.device.device_type == DeviceType.OVEN
+                and spec.minute_key == ThinQProperty.REMAIN_MINUTE
+            ):
+                return OvenTimerPropertyState(
+                    hour_holder,
+                    minute_holder,
+                    second_holder,
+                    current_state_holder=self._get_holder(
+                        ThinQProperty.CURRENT_STATE, location
+                    ),
+                    time_format=spec.time_format,
+                    setter=spec.setter,
+                )
             return TimerPropertyState(
                 hour_holder,
                 minute_holder,
@@ -663,12 +678,14 @@ class HABridge:
 
         # Update all states.
         for state in self.state_map.values():
+            if isinstance(state, OvenTimerPropertyState):
+                state.record_timer_update(response)
             state.update(preferred_unit=self.preferred_temperature_unit)
 
         return self.state_map
 
     def update_status(
-        self, status: dict[str, Any] | None
+        self, status: dict[str, Any] | list[dict[str, Any]] | None
     ) -> dict[str, PropertyState] | None:
         """Update data manually."""
         if status is not None:
@@ -676,6 +693,8 @@ class HABridge:
 
         # Update all states.
         for state in self.state_map.values():
+            if isinstance(state, OvenTimerPropertyState):
+                state.record_timer_update(status)
             if isinstance(
                 state,
                 (

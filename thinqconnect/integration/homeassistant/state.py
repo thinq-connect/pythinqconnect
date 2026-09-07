@@ -7,7 +7,7 @@
 
 from collections import deque
 from collections.abc import Awaitable, Callable, Iterable
-from datetime import time
+from datetime import datetime, time, timedelta, timezone
 from typing import Any
 
 from thinqconnect import ConnectBaseDevice, ThinQAPIException
@@ -320,6 +320,74 @@ class TimerPropertyState(PropertyState):
         if self.second_holder is not None:
             messages.append(f"{self.second_holder.dump()},")
         return "".join(messages)
+
+
+class OvenTimerPropertyState(TimerPropertyState):
+    """Expose a stable cook-timer end time using fresh per-cavity reports."""
+
+    def __init__(
+        self,
+        hour_holder: PropertyHolder | None,
+        minute_holder: PropertyHolder,
+        second_holder: PropertyHolder | None,
+        *,
+        current_state_holder: PropertyHolder | None,
+        time_format: str | None = None,
+        setter: Callable[[ConnectBaseDevice, time | None], Awaitable[None]]
+        | None = None,
+    ) -> None:
+        super().__init__(
+            hour_holder,
+            minute_holder,
+            second_holder,
+            time_format=time_format,
+            setter=setter,
+        )
+        self.current_state_holder = current_state_holder
+        self.end_time: datetime | None = None
+        self._timer_updated = True
+
+    def record_timer_update(
+        self, status: dict[str, Any] | list[dict[str, Any]] | None
+    ) -> None:
+        """Record remaining-time fields before partial updates lose their origin."""
+        if not isinstance(status, list):
+            return
+        for cavity in status:
+            location = cavity.get("location", {}).get("locationName", "").lower()
+            if location == self.location and any(
+                key in (cavity.get("timer") or {})
+                for key in ("remainHour", "remainMinute", "remainSecond")
+            ):
+                self._timer_updated = True
+                return
+
+    def update(self, *, preferred_unit: str | None = None) -> None:
+        """Clear inactive timers and re-anchor only on a fresh timer report."""
+        super().update(preferred_unit=preferred_unit)
+        timer_updated = self._timer_updated
+        self._timer_updated = False
+        current_state = (
+            self.current_state_holder.get_value()
+            if self.current_state_holder is not None
+            else None
+        )
+        if (
+            current_state not in {"preheating", "cooking_in_progress"}
+            or not isinstance(self.value, time)
+            or self.value == time.min
+        ):
+            self.end_time = None
+            return
+        if not timer_updated:
+            return
+        end_time = datetime.now(timezone.utc) + timedelta(
+            hours=self.value.hour, minutes=self.value.minute, seconds=self.value.second
+        )
+        if self.end_time is None or abs(end_time - self.end_time) > timedelta(
+            seconds=5
+        ):
+            self.end_time = end_time
 
 
 class TemperaturePropertyState(PropertyState):
