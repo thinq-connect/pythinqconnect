@@ -84,7 +84,7 @@ class AirConditionerProfile(ConnectDeviceProfile):
                 },
                 "airFlow": {
                     self._get_preferred_property_key(
-                        profile, "airFlow", ["windStrengthDetail", "windStrength"]
+                        profile, "airFlow", ["windStrength", "windStrengthDetail"]
                     ): Property.WIND_STRENGTH,
                     "windStep": Property.WIND_STEP,
                 },
