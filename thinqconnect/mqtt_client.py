@@ -8,14 +8,16 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import re
 from enum import Enum
 from typing import Callable
 
 from aiohttp import ClientTimeout, request
 from awscrt import io, mqtt
 from awsiot import mqtt_connection_builder
-from OpenSSL import crypto
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import NameOID
 
 from .thinq_api import ThinQApi
 
@@ -157,27 +159,20 @@ class ThinQMQTTClient:
 
         self.bytes_root_ca = cert_data.encode("utf-8")
 
-        key = crypto.PKey()
-        key.generate_key(crypto.TYPE_RSA, PRIVATE_KEY_SIZE)
-        key_pem = crypto.dump_privatekey(crypto.FILETYPE_PEM, key).decode("utf-8")
-        self.bytes_private_key = key_pem.encode("utf-8")
-
-        csr = crypto.X509Req()
-        csr.get_subject().CN = "lg_thinq"
-        csr.set_pubkey(key)
-        csr.sign(key, "sha512")
-
-        csr_pem = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr).decode(encoding="utf-8")
-        self.csr_str = (
-            re.search(
-                r"-+BEGIN CERTIFICATE REQUEST-+\s+(.*?)\s+-+END CERTIFICATE REQUEST-+",
-                csr_pem,
-                flags=re.DOTALL,
-            )
-            .group(1)
-            .strip()
-            .replace("\n", "")
+        key = rsa.generate_private_key(public_exponent=65537, key_size=PRIVATE_KEY_SIZE)
+        self.bytes_private_key = key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
         )
+
+        csr = (
+            x509.CertificateSigningRequestBuilder()
+            .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "lg_thinq")]))
+            .sign(key, hashes.SHA512())
+        )
+        csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode("ascii")
+        self.csr_str = "".join(csr_pem.strip().splitlines()[1:-1])
         return True
 
     async def issue_certificate(self) -> bool:

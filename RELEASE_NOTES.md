@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.0.14 (2026-09-09)
+### Security
+* Replace **pyOpenSSL** with **cryptography** for MQTT certificate signing request generation to address a security vulnerability
+
 ## 1.0.13 (2026-06-19)
 ### Features
 * Add **wind direction** property options (air_conditioner): [#19](https://github.com/thinq-connect/pythinqconnect/issues/19)

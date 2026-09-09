@@ -15,7 +15,7 @@ with open(os.path.join("README.md"), "r") as fh:
 
 setup(
     name="thinqconnect",
-    version="1.0.13",
+    version="1.0.14",
     packages=find_packages(exclude=["tests"]),
     description="ThinQ Connect Python SDK",
     author="ThinQConnect",
@@ -24,7 +24,11 @@ setup(
     python_requires=">=3.10",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=["aiohttp>=3.14.0", "awsiotsdk", "pyOpenSSL"],
+    install_requires=[
+        "aiohttp>=3.14.0",
+        "awsiotsdk",
+        "cryptography>=50.0.1",
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
