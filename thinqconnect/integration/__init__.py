@@ -16,7 +16,7 @@ from .homeassistant.specification import (
     ThinQPropertyEx,
     TimerProperty,
 )
-from .homeassistant.state import DeviceState, PropertyState
+from .homeassistant.state import DeviceState, OvenTimerPropertyState, PropertyState
 
 __all__ = [
     "ActiveMode",
@@ -24,6 +24,7 @@ __all__ = [
     "ExtendedProperty",
     "HABridge",
     "NotConnectedDeviceError",
+    "OvenTimerPropertyState",
     "PropertyState",
     "ThinQPropertyEx",
     "TimerProperty",
