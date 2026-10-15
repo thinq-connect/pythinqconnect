@@ -237,7 +237,7 @@ class ThinQMQTTClient:
                 on_connection_closed=self._on_connection_closed,
                 client_id=self._client_id,
                 clean_session=False,
-                keep_alive_secs=6,
+                keep_alive_secs=30,
                 http_proxy_options=None,
             )
             return mqtt_connection
